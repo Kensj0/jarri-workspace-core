@@ -1,6 +1,20 @@
 import { panelSummarySemantic } from "../core/panelSemantics";
 import type { PanelDefinition, WorkspaceModuleDefinition } from "../core/types";
-import { KennystunerPanel, normalizeKennystunerState } from "./kennystuner/KennystunerPanel";
+
+// Kenny's Tuner is its own web app (kennystuner.netlify.app, github.com/Kensj0/kennystuner).
+// This panel only shows it. The tuning logic lives in that app.
+const KENNYSTUNER_URL = "https://kennystuner.netlify.app/";
+
+function KennystunerPanel() {
+  return (
+    <iframe
+      src={KENNYSTUNER_URL}
+      title="Kenny's Tuner"
+      allow="microphone"
+      style={{ width: "100%", height: "100%", border: 0 }}
+    />
+  );
+}
 
 const kennystunerPanelDefinition: PanelDefinition = {
   moduleId: "kennystuner",
@@ -18,18 +32,15 @@ const kennystunerPanelDefinition: PanelDefinition = {
     renameable: false,
     canBeDirty: false,
   },
-  createInitialState: () => normalizeKennystunerState(undefined),
-  normalizeState: (input) => {
-    const state = normalizeKennystunerState(input);
-    return {
-      state,
-      repaired: JSON.stringify(input) !== JSON.stringify(state),
-      warnings: [],
-    };
-  },
+  createInitialState: () => ({}),
+  normalizeState: () => ({
+    state: {},
+    repaired: false,
+    warnings: [],
+  }),
   semanticStrategy: panelSummarySemantic(
     "Ready",
-    "Instrument tuner. The needle and spectrum are live from the microphone.",
+    "Instrument tuner shown from its own web app.",
   ),
   surfacePresentationMemory: {},
   Component: KennystunerPanel,
