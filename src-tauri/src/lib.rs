@@ -1177,6 +1177,89 @@ fn workspace_fs_read_binary(request: WorkspaceFsReadBinaryRequest) -> Result<Val
     }))
 }
 
+const THEME_FILE_SUFFIX: &str = ".jarri-theme.json";
+const THEME_FILE_MAX_BYTES: usize = 256 * 1024;
+
+fn theme_library_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    use tauri::Manager;
+    let dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|error| error.to_string())?
+        .join("themes");
+    fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
+    Ok(dir)
+}
+
+fn theme_file_name_is_valid(name: &str) -> bool {
+    !name.starts_with('.')
+        && name.len() <= 120
+        && name.ends_with(THEME_FILE_SUFFIX)
+        && name
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ThemeLibraryFile {
+    file_name: String,
+    text: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ThemeLibraryListing {
+    directory: String,
+    files: Vec<ThemeLibraryFile>,
+}
+
+#[tauri::command]
+fn theme_library_list(app: tauri::AppHandle) -> Result<ThemeLibraryListing, String> {
+    let dir = theme_library_dir(&app)?;
+    let mut files = Vec::new();
+    for entry in fs::read_dir(&dir).map_err(|error| error.to_string())? {
+        let Ok(entry) = entry else { continue };
+        let file_name = entry.file_name().to_string_lossy().into_owned();
+        if !theme_file_name_is_valid(&file_name) {
+            continue;
+        }
+        let Ok(file_type) = entry.file_type() else { continue };
+        if !file_type.is_file() {
+            continue;
+        }
+        if let Ok(text) = fs::read_to_string(entry.path()) {
+            files.push(ThemeLibraryFile { file_name, text });
+        }
+    }
+    files.sort_by(|a, b| a.file_name.cmp(&b.file_name));
+    Ok(ThemeLibraryListing {
+        directory: dir.to_string_lossy().into_owned(),
+        files,
+    })
+}
+
+#[tauri::command]
+fn theme_library_write(app: tauri::AppHandle, file_name: String, text: String) -> Result<(), String> {
+    if !theme_file_name_is_valid(&file_name) {
+        return Err("Invalid theme file name.".to_string());
+    }
+    if text.len() > THEME_FILE_MAX_BYTES {
+        return Err("The theme file is too large.".to_string());
+    }
+    let dir = theme_library_dir(&app)?;
+    fs::write(dir.join(file_name), text).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn theme_library_delete(app: tauri::AppHandle, file_name: String) -> Result<(), String> {
+    if !theme_file_name_is_valid(&file_name) {
+        return Err("Invalid theme file name.".to_string());
+    }
+    let dir = theme_library_dir(&app)?;
+    fs::remove_file(dir.join(file_name)).map_err(|error| error.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -1194,6 +1277,9 @@ pub fn run() {
             workspace_fs_delete,
             workspace_fs_read_text,
             workspace_fs_read_binary,
+            theme_library_list,
+            theme_library_write,
+            theme_library_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Jarri Workspace Core");

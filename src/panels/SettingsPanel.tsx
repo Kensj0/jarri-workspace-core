@@ -501,6 +501,12 @@ export function SettingsPanel({
         >
           Themes / Colours…
         </button>
+        <button
+          type="button"
+          onClick={() => openPanel("core", "theme-library")}
+        >
+          Theme library…
+        </button>
       </section>
 
       <section className="settings-panel__section settings-panel__section--panel-menu">

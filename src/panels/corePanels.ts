@@ -4,6 +4,7 @@ import {
   unavailableSemantic,
 } from "../core/panelSemantics";
 import { MissingPanel } from "./MissingPanel";
+import { ThemeLibraryPanel } from "./ThemeLibraryPanel";
 import { SettingsPanel } from "./SettingsPanel";
 import { ThemeColorsPanel } from "./ThemeColorsPanel";
 import {
@@ -76,6 +77,32 @@ const settingsPanelDefinition: PanelDefinition = {
   ),
   surfacePresentationMemory: {},
   Component: SettingsPanel,
+};
+
+const themeLibraryPanelDefinition: PanelDefinition = {
+  moduleId: "core",
+  panelType: "theme-library",
+  title: "Theme Library",
+  description: "Save the current appearance as a theme file, and apply saved themes.",
+  category: "core",
+  defaultGeometry: { x: 980, y: 420, width: 520, height: 560 },
+  minGeometry: { width: 380, height: 340 },
+  stateVersion: 1,
+  capabilities: {
+    closable: true,
+    resizable: true,
+    movable: true,
+    renameable: false,
+    canBeDirty: false,
+  },
+  createInitialState: () => ({}),
+  normalizeState: () => ({ state: {}, repaired: false, warnings: [] }),
+  semanticStrategy: panelSummarySemantic(
+    "Ready",
+    "Theme files and presets are available.",
+  ),
+  surfacePresentationMemory: {},
+  Component: ThemeLibraryPanel,
 };
 
 const themeColorsPanelDefinition: PanelDefinition = {
@@ -266,6 +293,7 @@ export const coreModule: WorkspaceModuleDefinition = {
     missingPanelDefinition,
     settingsPanelDefinition,
     themeColorsPanelDefinition,
+    themeLibraryPanelDefinition,
     colorPickerPanelDefinition,
     imageViewerPanelDefinition,
     textViewerPanelDefinition,
