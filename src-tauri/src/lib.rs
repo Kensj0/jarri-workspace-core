@@ -1177,10 +1177,13 @@ fn workspace_fs_read_binary(request: WorkspaceFsReadBinaryRequest) -> Result<Val
     }))
 }
 
+mod workspace_terminal;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
+        .manage(workspace_terminal::TerminalState::default())
         .manage(WorkspaceFsSearchRegistry::default())
         .invoke_handler(tauri::generate_handler![
             workspace_fs_stat,
@@ -1194,6 +1197,10 @@ pub fn run() {
             workspace_fs_delete,
             workspace_fs_read_text,
             workspace_fs_read_binary,
+            workspace_terminal::terminal_start,
+            workspace_terminal::terminal_write,
+            workspace_terminal::terminal_resize,
+            workspace_terminal::terminal_stop,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Jarri Workspace Core");
