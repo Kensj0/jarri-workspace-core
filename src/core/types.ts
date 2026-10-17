@@ -82,6 +82,7 @@ export type WorkspacePreferences = {
     | "pink-sparkle"
     | "chronogit";
   colorOverrides: Partial<WorkspaceColorTokens>;
+  panelRadius: number;
   panelMenu: PanelMenuPreferences;
   frameControls: WorkspaceFrameControlPreferences;
   panelViews: WorkspacePanelViewPreferences;
@@ -99,6 +100,10 @@ export type WorkspaceColorTokens = {
   control: string;
   menu: string;
 };
+
+export const PANEL_RADIUS_MIN = 0;
+export const PANEL_RADIUS_MAX = 24;
+export const DEFAULT_PANEL_RADIUS = 8;
 
 export type PanelMenuPreferences = {
   moduleOrder: string[];
@@ -136,6 +141,15 @@ export type WorkspaceState = {
   registryVersion?: string;
 };
 
+// The view and panel positions a tab had before Organize was switched on, so
+// switching Organize off can return to exactly that view.
+export type WorkspaceOrganizeSnapshot = {
+  canvasBounds: WorkspaceCanvasBounds;
+  canvasScale: number;
+  canvasCamera: WorkspaceCanvasCamera;
+  geometries: Record<string, PanelGeometry>;
+};
+
 export type WorkspaceTab = {
   id: string;
   title: string;
@@ -143,6 +157,7 @@ export type WorkspaceTab = {
   canvasScale: number;
   canvasCamera: WorkspaceCanvasCamera;
   panels: PanelInstance[];
+  organizeSnapshot?: WorkspaceOrganizeSnapshot | null;
   createdAt: string;
   updatedAt: string;
 };

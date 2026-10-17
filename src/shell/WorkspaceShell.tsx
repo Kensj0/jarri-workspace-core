@@ -29,6 +29,7 @@ import {
   type OpenResourceResult,
 } from "../core/resources";
 import jarriWorkspaceLogo from "../assets/jarri-workspace.png";
+import { ClipboardStatus } from "./ClipboardStatus";
 import { WorkspaceClock } from "./WorkspaceClock";
 
 export function WorkspaceShell() {
@@ -207,6 +208,7 @@ export function WorkspaceShell() {
   const colorStyle = {
     "--workspace-scale": preferences.scale,
     "--workspace-font-size": `${preferences.fontSize}px`,
+    "--panel-radius": `${preferences.panelRadius}px`,
     ...(preferences.colorOverrides.page ? { "--override-page": preferences.colorOverrides.page } : {}),
     ...(preferences.colorOverrides.canvas ? { "--override-canvas": preferences.colorOverrides.canvas } : {}),
     ...(preferences.colorOverrides.panel ? { "--override-panel": preferences.colorOverrides.panel } : {}),
@@ -373,6 +375,7 @@ export function WorkspaceShell() {
             Settings
           </button>
 
+          <ClipboardStatus />
           <WorkspaceClock preferences={preferences.clock} />
         </div>
       </header>
@@ -649,6 +652,8 @@ export function WorkspaceShell() {
           setPanelMenuOpen((open) => !open);
         }}
         onFocusPanel={controller.focusPanel}
+        organized={controller.activeTab.organizeSnapshot != null}
+        onToggleOrganize={controller.toggleActiveTabOrganize}
         onClosePanel={controller.closePanel}
         onTogglePanelMinimized={controller.togglePanelMinimized}
         onGeometryChange={controller.updatePanelGeometry}

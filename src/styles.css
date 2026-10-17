@@ -1076,6 +1076,12 @@ button:disabled {
   font-weight: 750;
 }
 
+.workspace-canvas__toolbar-actions button[aria-pressed="true"] {
+  border-color: #2f9e5f;
+  background: #2f9e5f;
+  color: #ffffff;
+}
+
 .workspace-canvas__toolbar-actions select {
   border: 1px solid var(--color-border-strong);
   border-radius: 6px;
@@ -1235,7 +1241,7 @@ button:disabled {
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--color-border-strong);
-  border-radius: 8px;
+  border-radius: var(--panel-radius, 8px);
   background: var(--color-panel);
   box-shadow: 0 18px 36px rgb(0 0 0 / 0.28);
 }
@@ -3874,6 +3880,45 @@ code {
 
 /* Workspace Core 0.3.0: configurable title-bar clock */
 
+.workspace-shell__clipboard {
+  display: grid;
+  flex: 0 1 auto;
+  justify-items: end;
+  min-width: 0;
+  color: var(--color-muted);
+  line-height: 1.15;
+  cursor: default;
+}
+
+.workspace-shell__clipboard-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.workspace-shell__clipboard-value {
+  max-width: 180px;
+  overflow: hidden;
+  padding: 0 4px;
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-shell__clipboard-value--flash {
+  animation: workspace-clipboard-flash 0.9s ease-out;
+}
+
+@keyframes workspace-clipboard-flash {
+  0% {
+    background: var(--color-border-strong);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
 .workspace-shell__clock {
   display: grid;
   flex: 0 0 auto;
@@ -4739,4 +4784,130 @@ code {
   .workspace-file-browser-tree {
     max-height: 180px;
   }
+}
+
+.theme-library-panel__summary,
+.theme-library-panel__status,
+.theme-library-panel__empty {
+  color: var(--color-muted);
+  margin: 4px 0 10px;
+}
+
+.theme-library-panel__error {
+  color: #e0a0a0;
+  margin: 4px 0 10px;
+}
+
+.theme-library-panel__folder {
+  color: var(--color-muted);
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  word-break: break-all;
+  margin: 0 0 8px;
+}
+
+.theme-library-panel__save {
+  display: flex;
+  gap: 8px;
+}
+
+.theme-library-panel__save input {
+  flex: 1;
+  min-width: 0;
+}
+
+.theme-library-panel__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.theme-library-panel__chips button.is-active {
+  outline: 1px solid var(--color-border-strong);
+}
+
+.theme-library-panel__list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.theme-library-panel__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--panel-radius, 8px);
+  background: var(--color-control);
+}
+
+.theme-library-panel__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-library-panel__meta small {
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-library-panel__meta--invalid strong {
+  color: #e0a0a0;
+}
+
+/* Phone panel (Zorin Connect) */
+.phone-panel {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.phone-panel__empty {
+  padding: 16px;
+  color: var(--color-muted);
+}
+
+.phone-panel__device {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.phone-panel__device header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.phone-panel__state {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.phone-panel__buttons,
+.phone-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.phone-panel__row input {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.phone-panel__message {
+  color: var(--color-muted);
+  font-size: 0.85rem;
 }

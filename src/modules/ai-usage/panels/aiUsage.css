@@ -1,0 +1,86 @@
+.ai-usage {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  color: var(--color-text);
+}
+
+.ai-usage__empty {
+  padding: 16px;
+  color: var(--color-muted);
+}
+
+.ai-usage__meter {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ai-usage__meter h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.ai-usage__meter p {
+  margin: 0;
+}
+
+.ai-usage__bar {
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: var(--color-canvas);
+}
+
+.ai-usage__bar span {
+  display: block;
+  height: 100%;
+  background: var(--color-text);
+}
+
+.ai-usage__bar span.is-warning,
+.ai-usage p.is-warning {
+  color: var(--color-warning, #b45309);
+}
+
+.ai-usage__bar span.is-warning {
+  background: var(--color-warning, #b45309);
+}
+
+.ai-usage__counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-usage__counts div {
+  min-width: 0;
+}
+
+.ai-usage__counts dt {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.ai-usage__counts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ai-usage__note {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.ai-usage__error {
+  font-size: 12px;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}

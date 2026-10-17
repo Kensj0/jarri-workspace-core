@@ -24,12 +24,40 @@ import {
   zoomAnchorForMode,
   type WorkspaceViewportAnchor,
 } from "../core/cameraMath";
-import { shouldReserveLocalWheel } from "../core/panelInteractions";
+import {
+  canScrollInWheelDirection,
+  shouldReserveLocalWheel,
+  wheelDeltaYInPixels,
+} from "../core/panelInteractions";
 import { PanelFrame } from "./PanelFrame";
 
 const CANVAS_GRID_SIZE = 24;
 const MIN_CANVAS_WIDTH = 900;
 const MIN_CANVAS_HEIGHT = 700;
+
+// A wheel over a panel scrolls only the innermost panel scroller that can
+// move, and never the canvas behind it, so the tab does not scroll too.
+function scrollPanelFromWheel(event: WheelEvent, panelFrame: Element) {
+  event.preventDefault();
+
+  const target = event.target instanceof Element ? event.target : null;
+  let candidate: Element | null = target;
+
+  while (candidate && candidate !== panelFrame) {
+    const overflowY = getComputedStyle(candidate).overflowY;
+    const isScrollable =
+      (overflowY === "auto" || overflowY === "scroll") &&
+      candidate.scrollHeight > candidate.clientHeight;
+    const deltaY = wheelDeltaYInPixels(event, candidate.clientHeight);
+
+    if (isScrollable && canScrollInWheelDirection(candidate, deltaY)) {
+      candidate.scrollTop += deltaY;
+      return;
+    }
+
+    candidate = candidate.parentElement;
+  }
+}
 
 type ResizeMode = "left" | "top" | "right" | "bottom" | "both";
 
@@ -62,6 +90,8 @@ type Props = {
   setFileOperationClipboard: (clipboard: unknown) => void;
   onOpenPanelsMenu: () => void;
   onFocusPanel: (panelId: string) => void;
+  organized: boolean;
+  onToggleOrganize: (viewport: { width: number; height: number }) => void;
   onClosePanel: (panelId: string) => void;
   onTogglePanelMinimized: (panelId: string) => void;
   onGeometryChange: (panelId: string, geometry: PanelGeometry) => void;
@@ -149,6 +179,8 @@ export function WorkspaceCanvas({
   setFileOperationClipboard,
   onOpenPanelsMenu,
   onFocusPanel,
+  organized,
+  onToggleOrganize,
   onClosePanel,
   onTogglePanelMinimized,
   onGeometryChange,
@@ -284,6 +316,13 @@ export function WorkspaceCanvas({
     return () => observer.disconnect();
   }, []);
 
+  function toggleOrganizeVisiblePanels() {
+    onToggleOrganize({
+      width: cameraViewportSize.width,
+      height: cameraViewportSize.height,
+    });
+  }
+
   function rememberViewport() {
     const surface = surfaceRef.current;
     if (!surface) {
@@ -375,6 +414,13 @@ export function WorkspaceCanvas({
 
       if (shouldReserveLocalWheel(event)) {
         event.preventDefault();
+        return;
+      }
+
+      const panelFrame =
+        event.target instanceof Element ? event.target.closest(".panel-frame") : null;
+      if (panelFrame) {
+        scrollPanelFromWheel(event, panelFrame);
       }
     }
 
@@ -776,6 +822,22 @@ export function WorkspaceCanvas({
         </div>
 
         <div className="workspace-canvas__toolbar-actions">
+          <button
+            type="button"
+            aria-pressed={organized}
+            onClick={toggleOrganizeVisiblePanels}
+            disabled={
+              (panels.length === 0 || cameraViewportSize.width <= 0) &&
+              !organized
+            }
+            title={
+              organized
+                ? "Organize is on. Turn it off to return to the view from before"
+                : "Arrange the panels in this tab in a grid and fit the canvas to them. Turn it off to return to the view from before"
+            }
+          >
+            Organize
+          </button>
           <button
             type="button"
             onClick={captureWorkspaceScreenshot}

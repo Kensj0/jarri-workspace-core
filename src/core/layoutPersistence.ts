@@ -20,7 +20,12 @@ import type {
   WorkspaceState,
   WorkspaceTab,
 } from "./types";
-import { WORKSPACE_SCHEMA_VERSION } from "./types";
+import {
+  DEFAULT_PANEL_RADIUS,
+  PANEL_RADIUS_MAX,
+  PANEL_RADIUS_MIN,
+  WORKSPACE_SCHEMA_VERSION,
+} from "./types";
 
 const STORAGE_KEY = "jarri.workspace.core.layout.v1";
 const LEGACY_STORAGE_KEYS: string[] = [];
@@ -270,6 +275,11 @@ function normalizePreferences(input: unknown): WorkspacePreferences {
     fontFamily,
     themePreset,
     colorOverrides: normalizeColorOverrides(raw.colorOverrides),
+    panelRadius: clamp(
+      Math.round(finiteNumber(raw.panelRadius, DEFAULT_PANEL_RADIUS)),
+      PANEL_RADIUS_MIN,
+      PANEL_RADIUS_MAX,
+    ),
     panelMenu: normalizePanelMenuPreferences(raw.panelMenu),
     frameControls: normalizeFrameControlPreferences(raw.frameControls),
     panelViews: normalizeWorkspacePanelViewPreferences(raw.panelViews),

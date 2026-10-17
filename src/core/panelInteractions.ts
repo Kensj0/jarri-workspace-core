@@ -24,6 +24,38 @@ function closest(target: unknown, selector: string): unknown {
   return (target as ClosestCapableTarget).closest!(selector);
 }
 
+const WHEEL_LINE_HEIGHT_PX = 16;
+
+export function wheelDeltaYInPixels(
+  event: Pick<WheelEvent, "deltaY" | "deltaMode">,
+  pageHeight: number,
+): number {
+  if (event.deltaMode === 1) {
+    return event.deltaY * WHEEL_LINE_HEIGHT_PX;
+  }
+
+  if (event.deltaMode === 2) {
+    return event.deltaY * pageHeight;
+  }
+
+  return event.deltaY;
+}
+
+export function canScrollInWheelDirection(
+  element: { scrollTop: number; scrollHeight: number; clientHeight: number },
+  deltaY: number,
+): boolean {
+  if (deltaY > 0) {
+    return element.scrollTop + element.clientHeight < element.scrollHeight - 0.5;
+  }
+
+  if (deltaY < 0) {
+    return element.scrollTop > 0.5;
+  }
+
+  return false;
+}
+
 export function shouldReserveLocalWheel(
   event: Pick<WheelEvent, "ctrlKey" | "target">,
 ): boolean {

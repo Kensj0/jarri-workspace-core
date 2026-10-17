@@ -3,6 +3,7 @@ import { geometryFromPanelDefinition } from "./layoutEngine";
 import type { PanelRegistry } from "./panelRegistry";
 import type { PanelInstance, WorkspaceState } from "./types";
 import {
+  DEFAULT_PANEL_RADIUS,
   DEFAULT_WORKSPACE_CANVAS_BOUNDS,
   DEFAULT_WORKSPACE_SYSTEM_SURFACE_POSITIONS,
 } from "./types";
@@ -73,6 +74,7 @@ export function createDefaultWorkspace(registry: PanelRegistry): WorkspaceState 
       fontFamily: "system",
       themePreset: "neutral",
       colorOverrides: {},
+      panelRadius: DEFAULT_PANEL_RADIUS,
       panelMenu: {
         moduleOrder: ["core", "demo"],
         hiddenModuleIds: [],
