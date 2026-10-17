@@ -24,12 +24,40 @@ import {
   zoomAnchorForMode,
   type WorkspaceViewportAnchor,
 } from "../core/cameraMath";
-import { shouldReserveLocalWheel } from "../core/panelInteractions";
+import {
+  canScrollInWheelDirection,
+  shouldReserveLocalWheel,
+  wheelDeltaYInPixels,
+} from "../core/panelInteractions";
 import { PanelFrame } from "./PanelFrame";
 
 const CANVAS_GRID_SIZE = 24;
 const MIN_CANVAS_WIDTH = 900;
 const MIN_CANVAS_HEIGHT = 700;
+
+// A wheel over a panel scrolls only the innermost panel scroller that can
+// move, and never the canvas behind it, so the tab does not scroll too.
+function scrollPanelFromWheel(event: WheelEvent, panelFrame: Element) {
+  event.preventDefault();
+
+  const target = event.target instanceof Element ? event.target : null;
+  let candidate: Element | null = target;
+
+  while (candidate && candidate !== panelFrame) {
+    const overflowY = getComputedStyle(candidate).overflowY;
+    const isScrollable =
+      (overflowY === "auto" || overflowY === "scroll") &&
+      candidate.scrollHeight > candidate.clientHeight;
+    const deltaY = wheelDeltaYInPixels(event, candidate.clientHeight);
+
+    if (isScrollable && canScrollInWheelDirection(candidate, deltaY)) {
+      candidate.scrollTop += deltaY;
+      return;
+    }
+
+    candidate = candidate.parentElement;
+  }
+}
 
 type ResizeMode = "left" | "top" | "right" | "bottom" | "both";
 
@@ -375,6 +403,13 @@ export function WorkspaceCanvas({
 
       if (shouldReserveLocalWheel(event)) {
         event.preventDefault();
+        return;
+      }
+
+      const panelFrame =
+        event.target instanceof Element ? event.target.closest(".panel-frame") : null;
+      if (panelFrame) {
+        scrollPanelFromWheel(event, panelFrame);
       }
     }
 
