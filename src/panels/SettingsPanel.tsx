@@ -479,6 +479,22 @@ export function SettingsPanel({
 
       <section className="settings-panel__section settings-panel__section--appearance">
         <h3>Appearance</h3>
+        <label>
+          <span>Panel corners</span>
+          <input
+            max="24"
+            min="0"
+            step="1"
+            type="range"
+            value={preferences.panelRadius}
+            onChange={(event) =>
+              updatePreferences({
+                panelRadius: Number.parseInt(event.target.value, 10),
+              })
+            }
+          />
+          <strong>{preferences.panelRadius}px</strong>
+        </label>
         <button
           type="button"
           onClick={() => openPanel("core", "theme-colors")}

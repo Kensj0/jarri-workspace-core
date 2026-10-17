@@ -73,6 +73,7 @@ function createDefaultWorkspace(): WorkspaceState {
       fontFamily: "system",
       themePreset: "neutral",
       colorOverrides: {},
+      panelRadius: 8,
       panelMenu: {
         moduleOrder: ["core", "demo"],
         hiddenModuleIds: [],

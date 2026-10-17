@@ -82,6 +82,7 @@ export type WorkspacePreferences = {
     | "pink-sparkle"
     | "chronogit";
   colorOverrides: Partial<WorkspaceColorTokens>;
+  panelRadius: number;
   panelMenu: PanelMenuPreferences;
   frameControls: WorkspaceFrameControlPreferences;
   panelViews: WorkspacePanelViewPreferences;
@@ -99,6 +100,10 @@ export type WorkspaceColorTokens = {
   control: string;
   menu: string;
 };
+
+export const PANEL_RADIUS_MIN = 0;
+export const PANEL_RADIUS_MAX = 24;
+export const DEFAULT_PANEL_RADIUS = 8;
 
 export type PanelMenuPreferences = {
   moduleOrder: string[];
