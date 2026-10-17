@@ -1177,6 +1177,8 @@ fn workspace_fs_read_binary(request: WorkspaceFsReadBinaryRequest) -> Result<Val
     }))
 }
 
+mod ai_usage;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -1194,6 +1196,7 @@ pub fn run() {
             workspace_fs_delete,
             workspace_fs_read_text,
             workspace_fs_read_binary,
+            ai_usage::ai_usage_snapshot,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Jarri Workspace Core");
