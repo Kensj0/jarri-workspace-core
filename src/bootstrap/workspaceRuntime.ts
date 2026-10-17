@@ -5,6 +5,7 @@ import { kennystunerModule } from "../panels/kennystunerModule";
 import { terminalModule } from "../modules/terminal/module";
 import { phoneModule } from "../modules/phone/module";
 import { aiUsageModule } from "../modules/ai-usage/module";
+import { chronogitModule } from "../modules/chronogit/module";
 
 export function bootstrapWorkspaceRuntime() {
   const runtime = createWorkspaceModuleRuntime();
@@ -14,6 +15,7 @@ export function bootstrapWorkspaceRuntime() {
   runtime.registerModule(terminalModule);
   runtime.registerModule(phoneModule);
   runtime.registerModule(aiUsageModule);
+  runtime.registerModule(chronogitModule);
   return runtime;
 }
 

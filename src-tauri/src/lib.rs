@@ -1287,6 +1287,7 @@ fn allow_microphone_requests(_app: &tauri::App) -> tauri::Result<()> {
 }
 
 mod ai_usage;
+mod chronogit;
 mod workspace_terminal;
 mod zorin_connect;
 
@@ -1321,6 +1322,7 @@ pub fn run() {
             zorin_connect::zorin_status,
             zorin_connect::zorin_command,
             ai_usage::ai_usage_snapshot,
+            chronogit::chronogit_launch,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Jarri Workspace Core");
