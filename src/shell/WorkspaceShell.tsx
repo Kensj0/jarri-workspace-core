@@ -29,6 +29,7 @@ import {
   type OpenResourceResult,
 } from "../core/resources";
 import jarriWorkspaceLogo from "../assets/jarri-workspace.png";
+import { ClipboardStatus } from "./ClipboardStatus";
 import { WorkspaceClock } from "./WorkspaceClock";
 
 export function WorkspaceShell() {
@@ -373,6 +374,7 @@ export function WorkspaceShell() {
             Settings
           </button>
 
+          <ClipboardStatus />
           <WorkspaceClock preferences={preferences.clock} />
         </div>
       </header>

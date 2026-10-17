@@ -3874,6 +3874,45 @@ code {
 
 /* Workspace Core 0.3.0: configurable title-bar clock */
 
+.workspace-shell__clipboard {
+  display: grid;
+  flex: 0 1 auto;
+  justify-items: end;
+  min-width: 0;
+  color: var(--color-muted);
+  line-height: 1.15;
+  cursor: default;
+}
+
+.workspace-shell__clipboard-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.workspace-shell__clipboard-value {
+  max-width: 180px;
+  overflow: hidden;
+  padding: 0 4px;
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-shell__clipboard-value--flash {
+  animation: workspace-clipboard-flash 0.9s ease-out;
+}
+
+@keyframes workspace-clipboard-flash {
+  0% {
+    background: var(--color-border-strong);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
 .workspace-shell__clock {
   display: grid;
   flex: 0 0 auto;
