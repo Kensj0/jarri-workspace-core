@@ -36,11 +36,19 @@ const panel: PanelDefinition = {
 
   createInitialState: () => ({}),
 
-  normalizeState: () => ({
-    state: {},
-    repaired: false,
-    warnings: [],
-  }),
+  normalizeState: (input) => {
+    const launch = (input ?? {}) as { cwd?: unknown; command?: unknown };
+    const state: { cwd?: string; command?: string[] } = {};
+    if (typeof launch.cwd === "string") state.cwd = launch.cwd;
+    if (
+      Array.isArray(launch.command) &&
+      launch.command.length > 0 &&
+      launch.command.every((arg) => typeof arg === "string")
+    ) {
+      state.command = launch.command;
+    }
+    return { state, repaired: false, warnings: [] };
+  },
 
   semanticStrategy: staticSemantic(() => ({
     kind: "native-terminal",
