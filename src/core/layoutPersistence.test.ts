@@ -520,6 +520,38 @@ function testCanvasCameraSurvivesNormalizationPerTab() {
   );
 }
 
+function testOrganizeSnapshotSurvivesNormalization() {
+  const persisted = basePersistedWorkspace();
+  const baseTab = (persisted.tabs as Array<Record<string, unknown>>)[0];
+
+  persisted.tabs = [
+    {
+      ...baseTab,
+      id: "tab-organized",
+      organizeSnapshot: {
+        canvasBounds: { x: -240, y: 0, width: 7728, height: 3384 },
+        canvasScale: 0.5,
+        canvasCamera: { x: 120, y: 48 },
+        geometries: {
+          "panel-a": { x: 48, y: 48, width: 420, height: 240, minWidth: 324, minHeight: 180 },
+          "panel-broken": { x: "nope", y: 0, width: 10, height: 10 },
+        },
+      },
+    },
+  ];
+
+  const result = load(persisted);
+  const snapshot = result.state.tabs[0].organizeSnapshot;
+
+  assert(snapshot, "organize snapshot survives normalization");
+  assertEqual(snapshot.canvasScale, 0.5, "snapshot zoom survives");
+  assertEqual(snapshot.canvasCamera.x, 120, "snapshot camera x survives");
+  assertEqual(snapshot.canvasBounds.width, 7728, "snapshot canvas width survives");
+  assertEqual(snapshot.geometries["panel-a"].minWidth, 324, "snapshot keeps min width");
+  assertEqual(snapshot.geometries["panel-a"].minHeight, 180, "snapshot keeps min height");
+  assert(!("panel-broken" in snapshot.geometries), "invalid snapshot geometry is dropped");
+}
+
 function testPanelMenuExpandedModulesNormalizeDeterministically() {
   const workspace = basePersistedWorkspace();
   const preferences = workspace.preferences as WorkspaceState["preferences"];
@@ -576,6 +608,7 @@ function main() {
   testInvalidGenericCameraValuesRepairDeterministically();
   testCanvasBoundsPreserveNegativeOriginAndExpandAroundPanels();
   testCanvasCameraSurvivesNormalizationPerTab();
+  testOrganizeSnapshotSurvivesNormalization();
   testPanelMenuExpandedModulesNormalizeDeterministically();
   console.log("layout persistence tests passed");
 }

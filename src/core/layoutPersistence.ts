@@ -15,6 +15,7 @@ import type {
   PersistedWorkspaceDocument,
   WorkspaceCanvasBounds,
   WorkspaceColorTokens,
+  WorkspaceOrganizeSnapshot,
   WorkspacePanelViewPreferences,
   WorkspacePreferences,
   WorkspaceState,
@@ -738,9 +739,66 @@ function normalizeTab(
       2,
     ),
     canvasCamera: normalizeCanvasCamera(raw.canvasCamera, canvasBounds),
+    organizeSnapshot: normalizeOrganizeSnapshot(
+      raw.organizeSnapshot,
+      canvasBounds,
+    ),
     panels: repairFocusOrder(panels),
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : now,
     updatedAt: now,
+  };
+}
+
+function normalizeOrganizeSnapshot(
+  input: unknown,
+  fallbackCanvasBounds: WorkspaceCanvasBounds,
+): WorkspaceOrganizeSnapshot | null {
+  if (!isRecord(input)) {
+    return null;
+  }
+
+  const canvasBounds = normalizeCanvasBounds(
+    input.canvasBounds,
+    [],
+    fallbackCanvasBounds,
+  );
+  const geometries: Record<string, PanelGeometry> = {};
+
+  if (isRecord(input.geometries)) {
+    for (const [panelId, value] of Object.entries(input.geometries)) {
+      if (!isRecord(value)) {
+        continue;
+      }
+
+      const { x, y, width, height } = value;
+      if (
+        typeof x === "number" && Number.isFinite(x) &&
+        typeof y === "number" && Number.isFinite(y) &&
+        typeof width === "number" && Number.isFinite(width) &&
+        typeof height === "number" && Number.isFinite(height)
+      ) {
+        const { minWidth, minHeight } = value;
+        geometries[panelId] = {
+          x,
+          y,
+          width,
+          height,
+          ...(typeof minWidth === "number" && Number.isFinite(minWidth)
+            ? { minWidth }
+            : {}),
+          ...(typeof minHeight === "number" && Number.isFinite(minHeight)
+            ? { minHeight }
+            : {}),
+        };
+      }
+    }
+  }
+
+  return {
+    canvasBounds,
+    canvasScale: clamp(finiteNumber(input.canvasScale, 1), 0.25, 2),
+    canvasCamera: normalizeCanvasCamera(input.canvasCamera, canvasBounds),
+    geometries,
   };
 }
 
