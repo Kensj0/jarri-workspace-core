@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 
 type Battery = { charging: boolean; level: number };
 
@@ -27,6 +26,8 @@ type PhoneCommand =
   | { kind: "shareFile" }
   | { kind: "sms" };
 
+// The phone status and commands come from jarri-apps/phone-service. This panel only draws them.
+const SERVICE_URL = "http://127.0.0.1:8782";
 const REFRESH_MS = 5_000;
 
 export function PhonePanel() {
@@ -37,7 +38,11 @@ export function PhonePanel() {
 
   const refresh = useCallback(async () => {
     try {
-      setStatus(await invoke<PhoneStatus>("zorin_status"));
+      const response = await fetch(`${SERVICE_URL}/status`);
+      if (!response.ok) {
+        throw new Error(`service answered ${response.status}`);
+      }
+      setStatus((await response.json()) as PhoneStatus);
     } catch (error) {
       setStatus({ available: false, devices: [] });
       setMessage(String(error));
@@ -52,7 +57,14 @@ export function PhonePanel() {
 
   const send = async (deviceId: string, command: PhoneCommand, done: string) => {
     try {
-      await invoke("zorin_command", { deviceId, command });
+      const response = await fetch(`${SERVICE_URL}/command`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId, command }),
+      });
+      if (!response.ok) {
+        throw new Error((await response.json()).error ?? `service answered ${response.status}`);
+      }
       setMessage(done);
     } catch (error) {
       setMessage(`Failed: ${String(error)}`);
