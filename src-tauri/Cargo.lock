@@ -1641,11 +1641,13 @@ name = "jarri-workspace-core"
 version = "0.3.0"
 dependencies = [
  "base64 0.22.1",
+ "gio",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-clipboard-manager",
+ "webkit2gtk",
 ]
 
 [[package]]

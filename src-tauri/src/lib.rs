@@ -1177,10 +1177,39 @@ fn workspace_fs_read_binary(request: WorkspaceFsReadBinaryRequest) -> Result<Val
     }))
 }
 
+#[cfg(target_os = "linux")]
+fn allow_microphone_requests(app: &tauri::App) -> tauri::Result<()> {
+    use tauri::Manager;
+    use webkit2gtk::{glib::object::ObjectExt, PermissionRequestExt, WebViewExt};
+
+    if let Some(window) = app.get_webview_window("main") {
+        window.with_webview(|webview| {
+            webview.inner().connect_permission_request(|_, request| {
+                if request.is::<webkit2gtk::UserMediaPermissionRequest>() {
+                    request.allow();
+                    true
+                } else {
+                    false
+                }
+            });
+        })?;
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn allow_microphone_requests(_app: &tauri::App) -> tauri::Result<()> {
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
+        .setup(|app| {
+            allow_microphone_requests(app)?;
+            Ok(())
+        })
         .manage(WorkspaceFsSearchRegistry::default())
         .invoke_handler(tauri::generate_handler![
             workspace_fs_stat,
