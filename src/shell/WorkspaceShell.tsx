@@ -147,6 +147,7 @@ export function WorkspaceShell() {
   const modules = runtime.listModules().map((module) => ({
     moduleId: module.moduleId,
     title: module.title,
+    version: module.version,
   }));
 
   const panelGroups = useMemo(
@@ -371,6 +372,30 @@ export function WorkspaceShell() {
             }}
           >
             Settings
+          </button>
+
+          <button
+            type="button"
+            className="workspace-shell__action"
+            onClick={() => {
+              setPanelMenuOpen(false);
+              setFrameControlsMenuOpen(false);
+
+              const storePanel = controller.activeTab.panels.find(
+                (panel) =>
+                  panel.moduleId === "core" &&
+                  panel.panelType === "module-store",
+              );
+
+              if (storePanel) {
+                controller.closePanel(storePanel.id);
+                return;
+              }
+
+              controller.createPanel("core", "module-store");
+            }}
+          >
+            Modules
           </button>
 
           <WorkspaceClock preferences={preferences.clock} />

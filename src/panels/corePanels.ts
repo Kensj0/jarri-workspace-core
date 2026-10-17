@@ -4,6 +4,7 @@ import {
   unavailableSemantic,
 } from "../core/panelSemantics";
 import { MissingPanel } from "./MissingPanel";
+import { ModuleStorePanel } from "./ModuleStorePanel";
 import { SettingsPanel } from "./SettingsPanel";
 import { ThemeColorsPanel } from "./ThemeColorsPanel";
 import {
@@ -50,6 +51,32 @@ const missingPanelDefinition: PanelDefinition = {
     "Restore the module or close this placeholder panel.",
   ),
   Component: MissingPanel,
+};
+
+const moduleStorePanelDefinition: PanelDefinition = {
+  moduleId: "core",
+  panelType: "module-store",
+  title: "Modules",
+  description: "Installed Workspace modules and their versions.",
+  category: "core",
+  defaultGeometry: { x: 260, y: 160, width: 520, height: 480 },
+  minGeometry: { width: 320, height: 240 },
+  stateVersion: 1,
+  capabilities: {
+    closable: true,
+    resizable: true,
+    movable: true,
+    renameable: false,
+    canBeDirty: false,
+  },
+  createInitialState: () => ({}),
+  normalizeState: () => ({ state: {}, repaired: false, warnings: [] }),
+  semanticStrategy: panelSummarySemantic(
+    "Ready",
+    "Installed modules and versions are listed in this panel.",
+  ),
+  surfacePresentationMemory: {},
+  Component: ModuleStorePanel,
 };
 
 const settingsPanelDefinition: PanelDefinition = {
@@ -265,6 +292,7 @@ export const coreModule: WorkspaceModuleDefinition = {
   panels: [
     missingPanelDefinition,
     settingsPanelDefinition,
+    moduleStorePanelDefinition,
     themeColorsPanelDefinition,
     colorPickerPanelDefinition,
     imageViewerPanelDefinition,

@@ -54,7 +54,7 @@ type Props = {
   canvasSurfaceRef: RefObject<HTMLDivElement | null>;
   canvasScale: number;
   preferences: WorkspacePreferences;
-  modules: Array<Pick<WorkspaceModuleDefinition, "moduleId" | "title">>;
+  modules: Array<Pick<WorkspaceModuleDefinition, "moduleId" | "title" | "version">>;
   fileOperationClipboard: unknown;
   setFileOperationClipboard: (clipboard: unknown) => void;
   onFocus: (

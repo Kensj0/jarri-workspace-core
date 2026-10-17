@@ -84,7 +84,7 @@ type Props = {
   definition: PanelDefinition | null;
   panel: PanelInstance;
   preferences: WorkspacePreferences;
-  modules: Array<Pick<WorkspaceModuleDefinition, "moduleId" | "title">>;
+  modules: Array<Pick<WorkspaceModuleDefinition, "moduleId" | "title" | "version">>;
   moduleTitle?: string;
   semanticController: WorkspaceProjectionPublicationController;
   frameControlPublisher: PanelFrameControlPublisher;

@@ -269,7 +269,7 @@ export type PanelNormalizeResult = {
 export type PanelBodyProps = {
   panel: PanelInstance;
   preferences: WorkspacePreferences;
-  modules: Array<Pick<WorkspaceModuleDefinition, "moduleId" | "title">>;
+  modules: Array<Pick<WorkspaceModuleDefinition, "moduleId" | "title" | "version">>;
   updatePanelState: (panelState: unknown) => void;
   updatePreferences: (preferences: Partial<WorkspacePreferences>) => void;
   fileOperationClipboard: unknown;
