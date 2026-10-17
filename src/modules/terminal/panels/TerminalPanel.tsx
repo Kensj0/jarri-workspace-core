@@ -1,20 +1,31 @@
 import { useEffect, useRef } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 
-type TerminalOutput = {
-  session_id: string;
-  data: number[];
-};
+// The shell runs in the terminal service (jarri-apps/terminal-service), not in
+// Workspace. This panel only draws it.
+const SERVICE_URL = "http://127.0.0.1:8781";
+const OUTPUT_INTERVAL_MS = 40;
 
-type TerminalExit = {
-  session_id: string;
+type OutputResponse = {
+  next: number;
+  data: string;
+  exited: boolean;
 };
 
 const encoder = new TextEncoder();
+
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
 
 export function TerminalPanel() {
   const host = useRef<HTMLDivElement>(null);
@@ -25,8 +36,6 @@ export function TerminalPanel() {
 
     let disposed = false;
     let sessionId: string | null = null;
-    let unlistenOutput: (() => void) | undefined;
-    let unlistenExit: (() => void) | undefined;
 
     const style = getComputedStyle(element);
 
@@ -77,9 +86,9 @@ export function TerminalPanel() {
     const writeSubscription = terminal.onData((data) => {
       if (!sessionId || disposed) return;
 
-      void invoke("terminal_write", {
-        sessionId,
-        data: Array.from(encoder.encode(data)),
+      void fetch(`${SERVICE_URL}/sessions/${sessionId}/input`, {
+        method: "POST",
+        body: encoder.encode(data),
       }).catch((error) => {
         console.error("[terminal] write:", error);
       });
@@ -88,10 +97,10 @@ export function TerminalPanel() {
     const resizeSubscription = terminal.onResize(({ cols, rows }) => {
       if (!sessionId || disposed) return;
 
-      void invoke("terminal_resize", {
-        sessionId,
-        cols,
-        rows,
+      void fetch(`${SERVICE_URL}/sessions/${sessionId}/resize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cols, rows }),
       }).catch((error) => {
         console.error("[terminal] resize:", error);
       });
@@ -162,56 +171,54 @@ export function TerminalPanel() {
 
     async function start() {
       try {
-        const outputStop = await listen<TerminalOutput>(
-          "jarri://terminal-output",
-          ({ payload }) => {
-            if (
-              !disposed &&
-              payload.session_id === sessionId
-            ) {
-              terminal.write(new Uint8Array(payload.data));
-            }
-          }
-        );
-
-        const exitStop = await listen<TerminalExit>(
-          "jarri://terminal-exit",
-          ({ payload }) => {
-            if (payload.session_id === sessionId && !disposed) {
-              terminal.write("\r\n[Shell exited]\r\n");
-            }
-          }
-        );
-
-        if (disposed) {
-          outputStop();
-          exitStop();
-          return;
-        }
-
-        unlistenOutput = outputStop;
-        unlistenExit = exitStop;
-
-        const id = await invoke<string>("terminal_start", {
-          cols: terminal.cols,
-          rows: terminal.rows,
+        const response = await fetch(`${SERVICE_URL}/sessions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cols: terminal.cols, rows: terminal.rows }),
         });
+        if (!response.ok) {
+          throw new Error(`service answered ${response.status}`);
+        }
+        const { id } = (await response.json()) as { id: string };
 
         if (disposed) {
-          await invoke("terminal_stop", {
-            sessionId: id,
-          }).catch(console.error);
+          void fetch(`${SERVICE_URL}/sessions/${id}`, { method: "DELETE" });
           return;
         }
 
         sessionId = id;
         terminal.focus();
+        await pumpOutput(id);
       } catch (error) {
         if (!disposed) {
           terminal.writeln(
-            `\r\nTerminal startup failed: ${String(error)}`
+            `\r\nTerminal service not reachable (${String(error)}). Start jarri-apps/terminal-service.`
           );
         }
+      }
+    }
+
+    // Long-running loop: reads new output after the last cursor until the
+    // session exits or the panel is disposed.
+    async function pumpOutput(id: string) {
+      let cursor = 0;
+      while (!disposed) {
+        const response = await fetch(
+          `${SERVICE_URL}/sessions/${id}/output?after=${cursor}`
+        );
+        if (!response.ok) {
+          throw new Error(`output answered ${response.status}`);
+        }
+        const body = (await response.json()) as OutputResponse;
+        if (body.data) {
+          terminal.write(base64ToBytes(body.data));
+        }
+        cursor = body.next;
+        if (body.exited) {
+          if (!disposed) terminal.write("\r\n[Shell exited]\r\n");
+          return;
+        }
+        await sleep(OUTPUT_INTERVAL_MS);
       }
     }
 
@@ -225,12 +232,9 @@ export function TerminalPanel() {
       themeObserver.disconnect();
       writeSubscription.dispose();
       resizeSubscription.dispose();
-      unlistenOutput?.();
-      unlistenExit?.();
-
       if (sessionId) {
-        void invoke("terminal_stop", {
-          sessionId,
+        void fetch(`${SERVICE_URL}/sessions/${sessionId}`, {
+          method: "DELETE",
         }).catch(console.error);
       }
 
