@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import {
   durationLabel,
   exhaustsInMs,
@@ -18,6 +17,8 @@ type Snapshot = {
   limits: Limits | null;
 };
 
+// The usage numbers come from jarri-apps/ai-usage-service. This panel only draws them.
+const SERVICE_URL = "http://127.0.0.1:8783";
 const REFRESH_MS = 60_000;
 
 const count = (value: number) => value.toLocaleString("sv-SE");
@@ -97,7 +98,11 @@ export function AiUsagePanel() {
 
   const refresh = useCallback(async () => {
     try {
-      setSnapshot(await invoke<Snapshot>("ai_usage_snapshot"));
+      const response = await fetch(`${SERVICE_URL}/snapshot`);
+      if (!response.ok) {
+        throw new Error(`service answered ${response.status}`);
+      }
+      setSnapshot((await response.json()) as Snapshot);
       setError(null);
     } catch (failure) {
       setError(String(failure));
