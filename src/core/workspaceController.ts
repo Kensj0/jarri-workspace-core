@@ -7,6 +7,7 @@ import {
   normalizeGeometry,
   repairFocusOrder,
 } from "./layoutEngine";
+import { arrangedCanvasBounds, planPanelArrangement } from "./panelArrangement";
 import type { LayoutPersistence } from "./layoutPersistence";
 import type { PanelRegistry } from "./panelRegistry";
 import {
@@ -28,6 +29,7 @@ import type {
   WorkspaceCanvasBounds,
   WorkspacePreferences,
   WorkspaceState,
+  WorkspaceTab,
 } from "./types";
 import {
   DEFAULT_WORKSPACE_CANVAS_BOUNDS,
@@ -305,6 +307,7 @@ export type WorkspaceController = {
   togglePanelMinimized: (panelId: string) => void;
   focusPanel: (panelId: string) => void;
   updatePanelGeometry: (panelId: string, geometry: PanelGeometry) => void;
+  toggleActiveTabOrganize: (viewport: { width: number; height: number }) => void;
   updatePanelState: (panelId: string, panelState: unknown) => void;
   updatePanelViewPreferences: (
     moduleId: string,
@@ -678,6 +681,79 @@ export function useWorkspaceController({
     });
   }
 
+  // Organize is a toggle. Switching it on remembers the tab's view and panel
+  // positions and arranges the panels; switching it off restores that view.
+  // Panels added while organized keep their own positions.
+  function toggleActiveTabOrganize(viewport: { width: number; height: number }) {
+    const now = nowIso();
+
+    setWorkspace((current) => {
+      const activeTab = current.tabs.find(
+        (tab) => tab.id === current.activeTabId,
+      );
+      if (!activeTab) {
+        return current;
+      }
+
+      const replaceActiveTab = (
+        update: (tab: WorkspaceTab) => WorkspaceTab,
+      ): WorkspaceState => ({
+        ...current,
+        tabs: current.tabs.map((tab) =>
+          tab.id === current.activeTabId ? update(tab) : tab,
+        ),
+      });
+
+      const snapshot = activeTab.organizeSnapshot;
+      if (snapshot) {
+        return replaceActiveTab((tab) => ({
+          ...tab,
+          canvasBounds: snapshot.canvasBounds,
+          canvasScale: snapshot.canvasScale,
+          canvasCamera: snapshot.canvasCamera,
+          panels: tab.panels.map((panel) => {
+            const geometry = snapshot.geometries[panel.id];
+            return geometry ? { ...panel, geometry, updatedAt: now } : panel;
+          }),
+          organizeSnapshot: null,
+          updatedAt: now,
+        }));
+      }
+
+      const plan = planPanelArrangement({
+        panels: activeTab.panels,
+        viewport,
+        origin: activeTab.canvasCamera,
+        scale: activeTab.canvasScale,
+      });
+      if (plan.geometries.size === 0) {
+        return current;
+      }
+
+      const geometries = Object.fromEntries(
+        activeTab.panels.map((panel) => [panel.id, panel.geometry]),
+      );
+
+      return replaceActiveTab((tab) => ({
+        ...tab,
+        canvasBounds: arrangedCanvasBounds(plan, viewport),
+        canvasScale: plan.scale,
+        canvasCamera: plan.camera,
+        panels: tab.panels.map((panel) => {
+          const geometry = plan.geometries.get(panel.id);
+          return geometry ? { ...panel, geometry, updatedAt: now } : panel;
+        }),
+        organizeSnapshot: {
+          canvasBounds: activeTab.canvasBounds,
+          canvasScale: activeTab.canvasScale,
+          canvasCamera: activeTab.canvasCamera,
+          geometries,
+        },
+        updatedAt: now,
+      }));
+    });
+  }
+
   function updatePanelState(panelId: string, panelState: unknown) {
     const now = nowIso();
     updateActiveTab((panels) =>
@@ -791,6 +867,7 @@ export function useWorkspaceController({
     togglePanelMinimized,
     focusPanel,
     updatePanelGeometry,
+    toggleActiveTabOrganize,
     updatePanelState,
     updatePanelViewPreferences,
     updatePreferences,

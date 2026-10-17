@@ -1076,6 +1076,12 @@ button:disabled {
   font-weight: 750;
 }
 
+.workspace-canvas__toolbar-actions button[aria-pressed="true"] {
+  border-color: #2f9e5f;
+  background: #2f9e5f;
+  color: #ffffff;
+}
+
 .workspace-canvas__toolbar-actions select {
   border: 1px solid var(--color-border-strong);
   border-radius: 6px;

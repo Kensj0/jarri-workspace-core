@@ -136,6 +136,15 @@ export type WorkspaceState = {
   registryVersion?: string;
 };
 
+// The view and panel positions a tab had before Organize was switched on, so
+// switching Organize off can return to exactly that view.
+export type WorkspaceOrganizeSnapshot = {
+  canvasBounds: WorkspaceCanvasBounds;
+  canvasScale: number;
+  canvasCamera: WorkspaceCanvasCamera;
+  geometries: Record<string, PanelGeometry>;
+};
+
 export type WorkspaceTab = {
   id: string;
   title: string;
@@ -143,6 +152,7 @@ export type WorkspaceTab = {
   canvasScale: number;
   canvasCamera: WorkspaceCanvasCamera;
   panels: PanelInstance[];
+  organizeSnapshot?: WorkspaceOrganizeSnapshot | null;
   createdAt: string;
   updatedAt: string;
 };

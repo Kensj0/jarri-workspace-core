@@ -62,6 +62,8 @@ type Props = {
   setFileOperationClipboard: (clipboard: unknown) => void;
   onOpenPanelsMenu: () => void;
   onFocusPanel: (panelId: string) => void;
+  organized: boolean;
+  onToggleOrganize: (viewport: { width: number; height: number }) => void;
   onClosePanel: (panelId: string) => void;
   onTogglePanelMinimized: (panelId: string) => void;
   onGeometryChange: (panelId: string, geometry: PanelGeometry) => void;
@@ -149,6 +151,8 @@ export function WorkspaceCanvas({
   setFileOperationClipboard,
   onOpenPanelsMenu,
   onFocusPanel,
+  organized,
+  onToggleOrganize,
   onClosePanel,
   onTogglePanelMinimized,
   onGeometryChange,
@@ -283,6 +287,13 @@ export function WorkspaceCanvas({
 
     return () => observer.disconnect();
   }, []);
+
+  function toggleOrganizeVisiblePanels() {
+    onToggleOrganize({
+      width: cameraViewportSize.width,
+      height: cameraViewportSize.height,
+    });
+  }
 
   function rememberViewport() {
     const surface = surfaceRef.current;
@@ -776,6 +787,22 @@ export function WorkspaceCanvas({
         </div>
 
         <div className="workspace-canvas__toolbar-actions">
+          <button
+            type="button"
+            aria-pressed={organized}
+            onClick={toggleOrganizeVisiblePanels}
+            disabled={
+              (panels.length === 0 || cameraViewportSize.width <= 0) &&
+              !organized
+            }
+            title={
+              organized
+                ? "Organize is on. Turn it off to return to the view from before"
+                : "Arrange the panels in this tab in a grid and fit the canvas to them. Turn it off to return to the view from before"
+            }
+          >
+            Organize
+          </button>
           <button
             type="button"
             onClick={captureWorkspaceScreenshot}

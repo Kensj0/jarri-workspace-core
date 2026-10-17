@@ -649,6 +649,8 @@ export function WorkspaceShell() {
           setPanelMenuOpen((open) => !open);
         }}
         onFocusPanel={controller.focusPanel}
+        organized={controller.activeTab.organizeSnapshot != null}
+        onToggleOrganize={controller.toggleActiveTabOrganize}
         onClosePanel={controller.closePanel}
         onTogglePanelMinimized={controller.togglePanelMinimized}
         onGeometryChange={controller.updatePanelGeometry}
