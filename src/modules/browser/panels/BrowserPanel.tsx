@@ -153,7 +153,7 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
 
       <Box title="How it works">
         <ol className="cb__steps">
-          <li>Press Start. Claude gets its own Brave, next to your normal one.</li>
+          <li>Press Start. Brave opens in its own window. Your normal Brave is not touched.</li>
           <li>Claude asks you before it opens a new site.</li>
           <li>You say yes or no. Yes can last one hour, or until you remove it.</li>
           <li>To stop everything, press Pause or Stop.</li>
