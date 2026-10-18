@@ -31,6 +31,21 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
   const [offline, setOffline] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
+  // A small live picture of Claude's tab. It is only drawn here; Claude never gets it.
+  const [frame, setFrame] = useState<{ url: string; image: string } | null>(null);
+  const running = snapshot?.status.running ?? false;
+  useEffect(() => {
+    if (!running) {
+      setFrame(null);
+      return;
+    }
+    const grab = () =>
+      browserApi.screenshot().then(setFrame).catch(() => setFrame(null));
+    void grab();
+    const timer = window.setInterval(() => void grab(), 1000);
+    return () => window.clearInterval(timer);
+  }, [running]);
+
   const refresh = useCallback(async () => {
     try {
       const [status, events, requests, approvals, permissions] = await Promise.all([
@@ -97,6 +112,20 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
       <header className="cb__top">
         <h2 className="cb__title">Claude i Brave</h2>
       </header>
+
+      {status.running && (
+        <section className="cb__screen" aria-label="Det här ser Claude">
+          <p className="cb__muted">Det här ser Claude just nu</p>
+          {frame ? (
+            <>
+              <img src={frame.image} alt="Claudes Brave-fönster" />
+              <p className="cb__url">{frame.url.replace(/^https?:\/\//, "")}</p>
+            </>
+          ) : (
+            <p className="cb__muted">Ingen bild än. Claude har ingen flik öppen.</p>
+          )}
+        </section>
+      )}
 
       <FocusCard focus={focus} press={press} start={start} running={status.running} />
 

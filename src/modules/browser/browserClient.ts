@@ -38,6 +38,7 @@ export const browserApi = {
   revoke: (origin: string) => call("POST", "/permissions/revoke", { origin }),
   decide: (id: string, approve: boolean) => call("POST", "/approvals", { id, approve }),
   dismiss: (id: string) => call("POST", "/requests/dismiss", { id }),
+  screenshot: () => call<{ url: string; title: string; image: string }>("GET", "/screenshot"),
 };
 
 // What Claude is about to do: the newest intent, unless the log has a newer pause or stop.

@@ -169,3 +169,22 @@
   background: #fef3c7;
   color: #78350f;
 }
+
+.cb__screen {
+  display: grid;
+  gap: 6px;
+}
+
+.cb__screen img {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.cb__url {
+  font-size: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
