@@ -242,7 +242,7 @@ function FocusCard({
       return card(
         "idle",
         "Claude väntar på dig",
-        <p>Tryck på knappen för att öppna Claude-terminalen. Skriv sedan vad Claude ska göra, så syns det här.</p>,
+        <p>Skriv i Claude-terminalen vad Claude ska göra. Claude öppnar sidorna i sitt eget Brave-fönster, inte i din vanliga. Det du ser här är vad Claude gör just nu.</p>,
         <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(start)}>
           {running ? "Öppna Claude-terminalen" : "Starta Claude och öppna Brave"}
         </button>,
