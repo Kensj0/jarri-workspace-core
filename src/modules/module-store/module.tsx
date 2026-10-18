@@ -15,7 +15,7 @@ export function createModuleStoreModule(
   const panel: PanelDefinition = {
     moduleId: "modules",
     panelType: "store",
-    title: "Moduler",
+    title: "Modules",
     description: "Installed Workspace modules and their versions.",
     category: "domain",
     defaultGeometry: { x: 260, y: 160, width: 520, height: 480 },
@@ -40,7 +40,7 @@ export function createModuleStoreModule(
 
   return {
     moduleId: "modules",
-    title: "Moduler",
+    title: "Modules",
     version: "0.1.0",
     panels: [panel],
   };

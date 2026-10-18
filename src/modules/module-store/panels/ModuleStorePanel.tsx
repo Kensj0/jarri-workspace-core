@@ -42,9 +42,9 @@ const DOT: Record<Health, string> = {
 };
 
 const LABEL: Record<Health, string> = {
-  up: "Tjänsten körs",
-  down: "Tjänsten ligger nere",
-  unknown: "Ingen tjänst",
+  up: "Service running",
+  down: "Service down",
+  unknown: "No service",
 };
 
 type Kind = "service" | "web" | "builtin";
@@ -56,8 +56,8 @@ function kindOf(moduleId: string): Kind {
 }
 
 const BADGE: Record<Exclude<Kind, "service">, { text: string; color: string }> = {
-  web: { text: "Webbapp", color: "#2f6fbf" },
-  builtin: { text: "Inbyggd", color: "#7a6a4f" },
+  web: { text: "Web app", color: "#2f6fbf" },
+  builtin: { text: "Built-in", color: "#7a6a4f" },
 };
 
 export function ModuleStorePanel({ getModules }: Props) {
@@ -88,7 +88,7 @@ export function ModuleStorePanel({ getModules }: Props) {
   }, []);
 
   if (modules.length === 0) {
-    return <p className="module-store__empty">Inga moduler är registrerade.</p>;
+    return <p className="module-store__empty">No modules are registered.</p>;
   }
 
   return (
@@ -127,21 +127,21 @@ export function ModuleStorePanel({ getModules }: Props) {
               )}
               <strong>{module.moduleId}</strong>
               <span style={{ opacity: 0.7 }}>version {module.version}</span>
-              <span style={{ marginLeft: "auto", opacity: 0.6 }}>{isOpen ? "▲" : "Mer ▼"}</span>
+              <span style={{ marginLeft: "auto", opacity: 0.6 }}>{isOpen ? "▲" : "More ▼"}</span>
             </button>
 
             {isOpen && (
               <div className="module-store__details" style={{ marginTop: 6, marginLeft: 18, fontSize: "0.9em" }}>
-                <div>Paneler: {module.registeredPanelTypes.join(", ") || "inga"}</div>
+                <div>Panels: {module.registeredPanelTypes.join(", ") || "none"}</div>
                 {kind === "service" && (
                   <div>Status: {LABEL[status]} (port {SERVICE_PORTS[module.moduleId]})</div>
                 )}
                 {kind === "web" && (
                   <div>
-                    Webbapp: <a href={WEB_APPS[module.moduleId]} target="_blank" rel="noreferrer">{WEB_APPS[module.moduleId]}</a>
+                    Web app: <a href={WEB_APPS[module.moduleId]} target="_blank" rel="noreferrer">{WEB_APPS[module.moduleId]}</a>
                   </div>
                 )}
-                {kind === "builtin" && <div>Inbyggd i Jarri. Ingen tjänst att kontrollera.</div>}
+                {kind === "builtin" && <div>Built into Jarri. No service to check.</div>}
               </div>
             )}
           </li>
