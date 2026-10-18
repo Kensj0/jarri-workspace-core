@@ -109,6 +109,8 @@ export function ModuleStorePanel({ getModules, openPanel }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [notify, setNotify] = useState<boolean | null>(null);
   const [logs, setLogs] = useState<Record<string, string[]>>({});
+  // Last install error per app, shown right under its Install button.
+  const [installError, setInstallError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -232,15 +234,21 @@ export function ModuleStorePanel({ getModules, openPanel }: Props) {
   async function runInstall(moduleId: string) {
     setBusy(moduleId);
     setMessage(null);
+    setInstallError((current) => ({ ...current, [moduleId]: "" }));
     try {
       const response = await fetch(`http://127.0.0.1:${STORE_PORT}/install/${moduleId}`, {
         method: "POST",
         signal: AbortSignal.timeout(180_000),
       });
-      const body = (await response.json()) as { error?: string };
-      setMessage(response.ok ? `${moduleId} installed and started.` : `Install failed: ${body.error ?? response.status}`);
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (response.ok) {
+        setMessage(`${moduleId} installed and started.`);
+      } else {
+        const reason = body.error ?? `the store service answered ${response.status}`;
+        setInstallError((current) => ({ ...current, [moduleId]: `Install failed: ${reason}` }));
+      }
     } catch (error) {
-      setMessage(`Install failed: ${String(error)}`);
+      setInstallError((current) => ({ ...current, [moduleId]: `Install failed: ${String(error)}` }));
     } finally {
       setBusy(null);
       setApps(await loadApps());
@@ -369,6 +377,9 @@ export function ModuleStorePanel({ getModules, openPanel }: Props) {
                       <button type="button" disabled={busy !== null} onClick={() => void runInstall(module.moduleId)}>
                         {busy === module.moduleId ? "Installing…" : "Install"}
                       </button>
+                      {installError[module.moduleId] ? (
+                        <div style={{ color: "#c0392b", marginTop: 4 }}>{installError[module.moduleId]}</div>
+                      ) : null}
                     </div>
                   )}
                   {kind === "service" && app?.installed !== false && (
