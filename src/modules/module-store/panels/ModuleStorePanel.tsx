@@ -16,7 +16,7 @@ export function ModuleStorePanel({ getModules }: Props) {
     <ul className="module-store__list">
       {modules.map((module) => (
         <li key={module.moduleId} className="module-store__row">
-          <strong>{module.moduleId}</strong>
+          <strong>{module.moduleId}</strong>{" "}
           <span className="module-store__meta">
             version {module.version} · {module.registeredPanelTypes.length} paneler
           </span>
