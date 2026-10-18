@@ -10,8 +10,8 @@ import { BrowserViewHost } from "./panels/BrowserViewPanel";
 const panel: PanelDefinition = {
   moduleId: "browser",
   panelType: "browser",
-  title: "Claude i Brave",
-  description: "Vad Claude gör i Brave, med paus, stopp och godkännanden.",
+  title: "Claude in Brave",
+  description: "What Claude does in Brave, with pause, stop and approvals.",
   category: "domain",
 
   defaultGeometry: {
@@ -58,7 +58,7 @@ const viewPanel: PanelDefinition = {
   moduleId: "browser",
   panelType: "browser-view",
   title: "Brave",
-  description: "Claudes Brave-fönster som bild, med adressrad. Klick och skrivning går till Brave.",
+  description: "Claude's Brave as a live picture, with an address bar. Clicks and typing go to Brave.",
   category: "domain",
   defaultGeometry: { x: 700, y: 200, width: 760, height: 620 },
   minGeometry: { width: 360, height: 300 },
@@ -74,7 +74,7 @@ const viewPanel: PanelDefinition = {
   normalizeState: () => ({ state: {}, repaired: false, warnings: [] }),
   semanticStrategy: staticSemantic(() => ({
     kind: "browser-view",
-    summary: "The Brave window Claude uses, shown as a live picture.",
+    summary: "Claude's Brave, shown as a live picture.",
     sections: [],
   })),
   Component: BrowserViewHost,
@@ -82,7 +82,7 @@ const viewPanel: PanelDefinition = {
 
 export const browserModule: WorkspaceModuleDefinition = {
   moduleId: "browser",
-  title: "Claude i Brave",
+  title: "Claude in Brave",
   version: "0.2.0",
   panels: [panel, viewPanel],
 };

@@ -90,7 +90,7 @@ export function BrowserViewPanel() {
   if (!frame) {
     return (
       <div className="cbv">
-        <p className="cb__muted">Brave är inte igång. Öppna den i panelen Claude i Brave.</p>
+        <p className="cb__muted">Brave is not running. Open it from the Claude in Brave panel.</p>
       </div>
     );
   }
@@ -98,19 +98,19 @@ export function BrowserViewPanel() {
   return (
     <div className="cbv">
       <form className="cbv__bar" onSubmit={go}>
-        <button type="button" className="cb__btn" aria-label="Tillbaka" onClick={() => void browserApi.back()}>
+        <button type="button" className="cb__btn" aria-label="Back" onClick={() => void browserApi.back()}>
           ←
         </button>
         <input
           className="cbv__address"
-          aria-label="Adress"
+          aria-label="Address"
           value={address}
           onFocus={() => setTyping(true)}
           onBlur={() => setTyping(false)}
           onChange={(event) => setAddress(event.target.value)}
-          placeholder="Skriv en adress och tryck Enter"
+          placeholder="Type an address and press Enter"
         />
-        <button type="submit" className="cb__btn cb__btn--primary">Gå</button>
+        <button type="submit" className="cb__btn cb__btn--primary">Go</button>
       </form>
 
       <div
@@ -135,12 +135,12 @@ export function BrowserViewPanel() {
             onWheel={onWheel}
           />
         ) : (
-          <p className="cb__muted">Sidan visas här när Claude öppnat den.</p>
+          <p className="cb__muted">The site shows here when Claude has opened it.</p>
         )}
       </div>
 
       <p className="cb__muted cbv__hint">
-        Det du gör här händer i Claudes Brave. Klicka i sidan och skriv som vanligt.
+        What you do here happens in Claude's Brave. Click in the page and type as usual.
       </p>
       {error && <p className="cb__notice">{error}</p>}
     </div>

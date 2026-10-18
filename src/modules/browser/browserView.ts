@@ -31,19 +31,19 @@ export function focusOf(
 export function pillText(focus: Focus): string {
   switch (focus.kind) {
     case "closed":
-      return "Brave är stängd";
+      return "Brave is closed";
     case "approval":
-      return "Claude frågar dig";
+      return "Claude asks you";
     case "access":
-      return "Claude vill gå in på en sida";
+      return "Claude wants a site";
     case "login":
-      return "Du behöver logga in";
+      return "You need to log in";
     case "paused":
-      return "Pausad";
+      return "Paused";
     case "working":
-      return "Claude jobbar";
+      return "Claude is working";
     case "idle":
-      return "Claude väntar";
+      return "Claude is waiting";
   }
 }
 
@@ -53,14 +53,14 @@ function quoted(text: string): string {
   return match ? match[1] : text;
 }
 
-// "Nästa: click button "Skicka"" -> 'Claude tänker klicka på "Skicka"'
+// "Next: click button "Skicka"" -> 'Claude is about to click "Skicka"'
 export function plainStep(step: string): string {
-  const match = step.match(/^Nästa: (click|type|press) (.*)$/);
+  const match = step.match(/^Next: (click|type|press) (.*)$/);
   if (!match) return step;
   const [, action, rest] = match;
-  if (action === "click") return `Claude tänker klicka på "${quoted(rest)}"`;
-  if (action === "type") return `Claude tänker skriva i "${quoted(rest)}"`;
-  return `Claude tänker trycka ${rest.replace("tangent ", "")}`;
+  if (action === "click") return `Claude is about to click "${quoted(rest)}"`;
+  if (action === "type") return `Claude is about to type in "${quoted(rest)}"`;
+  return `Claude is about to press ${rest.replace("key ", "")}`;
 }
 
 // One log line in plain words, or null for lines the panel already shows elsewhere.
@@ -70,24 +70,28 @@ export function plainEvent(event: BrowserEvent): string | null {
     case "intent":
       return plainStep(text);
     case "open":
-      return `Claude öppnade ${text.replace(/^Öppnar /, "")}`;
+      return text.startsWith("Opening ")
+        ? `Claude opened ${text.replace(/^Opening /, "")}`
+        : `You opened ${text.replace(/^You opened /, "")}`;
     case "approval":
-      if (text.startsWith("Väntar")) return `Claude frågade dig: ${quoted(text)}`;
-      if (text.startsWith("Godkänd")) return `Du sa ja: ${quoted(text)}`;
-      if (text.startsWith("Nekad")) return `Du sa nej: ${quoted(text)}`;
+      if (text.startsWith("Waiting")) return `Claude asked you: ${quoted(text)}`;
+      if (text.startsWith("Approved")) return `You said yes: ${quoted(text)}`;
+      if (text.startsWith("Denied")) return `You said no: ${quoted(text)}`;
       return text;
     case "blocked":
-      return `Claude fick inte gå till ${text.replace(/^Blockerade /, "")}, du har inte sagt ja till den sidan`;
+      return `Claude could not go to ${text.replace(/^Blocked /, "")}. You have not said yes to that site.`;
     case "login":
-      return `Du behöver logga in på ${text.replace(/^Inloggning krävs på /, "")}`;
+      return `You need to log in to ${text.replace(/^Log in needed on /, "")}`;
     case "permission":
-      if (text.startsWith("Åtkomst beviljad")) return `Du sa ja till ${text.replace(/^Åtkomst beviljad: /, "")}`;
-      if (text.startsWith("Åtkomst återkallad")) return `Du tog bort ${text.replace(/^Åtkomst återkallad: /, "")}`;
+      if (text.startsWith("Access granted")) return `You said yes to ${text.replace(/^Access granted: /, "")}`;
+      if (text.startsWith("Access removed")) return `You removed ${text.replace(/^Access removed: /, "")}`;
       return text;
     case "pause":
-      return text.startsWith("Pausad") ? "Claude pausades" : text.startsWith("Igång") ? "Claude startade igen" : "Claude stoppades";
+      if (text.startsWith("Paused")) return "Claude was paused";
+      if (text.startsWith("Running")) return "Claude started again";
+      return "Claude was stopped";
     case "browser":
-      return text === "Brave startad" ? "Brave öppnades" : "Brave stängdes";
+      return text === "Brave started" ? "Brave opened" : "Brave closed";
     default:
       return null;
   }
@@ -95,8 +99,8 @@ export function plainEvent(event: BrowserEvent): string | null {
 
 // Errors from the service, in words a person can act on.
 export function friendlyError(message: string): string {
-  if (message === "paused") return "Claude är pausad. Tryck på Kör först.";
-  if (message === "origin_not_granted") return "Du har inte sagt ja till den sidan än.";
-  if (message === "brave_not_found") return "Brave hittades inte på datorn.";
+  if (message === "paused") return "Claude is paused. Press Run first.";
+  if (message === "origin_not_granted") return "You have not said yes to that site yet.";
+  if (message === "brave_not_found") return "Brave was not found on this computer.";
   return message;
 }

@@ -58,7 +58,7 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
     if (snapshot?.status.paused) await browserApi.pause(false);
     if (!snapshot?.status.running) await browserApi.start();
     if (!openPanel("terminal", "shell", { command: ["jarri-claude-shell"] })) {
-      throw new Error("Kunde inte öppna Claude-terminalen.");
+      throw new Error("Could not open the Claude terminal.");
     }
     openPanel("browser", "browser-view", {});
   };
@@ -78,10 +78,10 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
     return (
       <div className="cb">
         <div className="cb__card cb__card--alert">
-          <h3>Claude når inte sin tjänst</h3>
-          <p>Skriv i terminalen: <code>systemctl --user start jarri-browser</code></p>
+          <h3>Claude can't reach its service</h3>
+          <p>Type in the terminal: <code>systemctl --user start jarri-browser</code></p>
           <button className="cb__btn cb__btn--primary" type="button" onClick={() => void refresh()}>
-            Försök igen
+            Try again
           </button>
         </div>
       </div>
@@ -97,7 +97,7 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
   return (
     <div className="cb">
       <header className="cb__top">
-        <h2 className="cb__title">Claude i Brave</h2>
+        <h2 className="cb__title">Claude in Brave</h2>
       </header>
 
       <FocusCard focus={focus} press={press} start={start} running={status.running} worked={worked} />
@@ -108,37 +108,37 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
         <div className="cb__controls">
           {status.paused ? (
             <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(() => browserApi.pause(false))}>
-              ▶ Kör
+              ▶ Run
             </button>
           ) : (
             <button className="cb__btn" type="button" onClick={() => press(() => browserApi.pause(true))}>
-              ❚❚ Paus
+              ❚❚ Pause
             </button>
           )}
           <button className="cb__btn cb__btn--danger" type="button" onClick={() => press(browserApi.stop)}>
-            ■ Stoppa
+            ■ Stop
           </button>
         </div>
       )}
 
-      <Box title={`Sidor Claude får gå in på (${grants.length})`}>
-        {grants.length === 0 && <p className="cb__muted">Ingen sida är godkänd än. Claude frågar dig först.</p>}
+      <Box title={`Sites Claude may use (${grants.length})`}>
+        {grants.length === 0 && <p className="cb__muted">No site is approved yet. Claude asks you first.</p>}
         {grants.map(([origin, grant]) => (
           <div className="cb__row" key={origin}>
             <div>
               <strong>{origin.replace(/^https?:\/\//, "")}</strong>
               <div className="cb__muted">
-                {grant.until === null ? "Tills du tar bort det" : `Till kl ${clock(grant.until)}`}
+                {grant.until === null ? "Until you remove it" : `Until ${clock(grant.until)}`}
               </div>
             </div>
             <button className="cb__btn" type="button" onClick={() => press(() => browserApi.revoke(origin))}>
-              Ta bort
+              Remove
             </button>
           </div>
         ))}
       </Box>
 
-      <Box title="Vad har Claude gjort?">
+      <Box title="What has Claude done?">
         {events
           .slice(-40)
           .reverse()
@@ -151,12 +151,12 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
           ))}
       </Box>
 
-      <Box title="Så funkar det">
+      <Box title="How it works">
         <ol className="cb__steps">
-          <li>Öppna Brave med knappen. Det är Claudes eget fönster.</li>
-          <li>Claude frågar dig innan den går in på en ny sida.</li>
-          <li>Du säger ja eller nej. Ja kan vara i en timme eller tills du tar bort det.</li>
-          <li>Vill du stoppa allt, tryck Paus eller Stoppa.</li>
+          <li>Press Start. Claude gets its own Brave, next to your normal one.</li>
+          <li>Claude asks you before it opens a new site.</li>
+          <li>You say yes or no. Yes can last one hour, or until you remove it.</li>
+          <li>To stop everything, press Pause or Stop.</li>
         </ol>
       </Box>
     </div>
@@ -189,68 +189,68 @@ function FocusCard({
     case "closed":
       return card(
         "closed",
-        focus.paused ? "Claude är stoppad" : "Claude är inte igång",
-        <p>Tryck på knappen. Då öppnas Brave och en Claude-terminal bredvid, redo för din uppgift.</p>,
+        focus.paused ? "Claude is stopped" : "Claude is not running",
+        <p>Press the button. Brave and a Claude terminal open next to each other, ready for your task.</p>,
         <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(start)}>
-          Starta Claude och öppna Brave
+          Start Claude and open Brave
         </button>,
       );
 
     case "approval": {
       const what = focus.approval.action === "press"
-        ? "trycka Enter i ett formulär"
-        : `klicka på "${focus.approval.label.replace(/^\w+ "(.*)"$/, "$1")}"`;
-      return card("ask", "Claude vill göra något",
-        <p>Claude vill <strong>{what}</strong>. Det kan skicka, betala, ta bort eller logga in. Säg ja bara om du vill det.</p>,
+        ? "press Enter in a form"
+        : `click "${focus.approval.label.replace(/^\w+ "(.*)"$/, "$1")}"`;
+      return card("ask", "Claude wants to do something",
+        <p>Claude wants to <strong>{what}</strong>. It could send, pay, delete or log in. Only say yes if you want that.</p>,
         <>
           <button className="cb__btn cb__btn--primary" type="button"
-            onClick={() => press(() => browserApi.decide(focus.approval.id, true))}>Ja</button>
+            onClick={() => press(() => browserApi.decide(focus.approval.id, true))}>Yes</button>
           <button className="cb__btn" type="button"
-            onClick={() => press(() => browserApi.decide(focus.approval.id, false))}>Nej</button>
+            onClick={() => press(() => browserApi.decide(focus.approval.id, false))}>No</button>
         </>);
     }
 
     case "access":
-      return card("ask", "Claude vill gå in på en sida",
-        <p>Sidan: <strong>{focus.request.origin.replace(/^https?:\/\//, "")}</strong>. Ja betyder att Claude får läsa sidan och klicka på den.</p>,
+      return card("ask", "Claude wants to open a site",
+        <p>Site: <strong>{focus.request.origin.replace(/^https?:\/\//, "")}</strong>. Yes means Claude may read the site and click on it.</p>,
         <>
           <button className="cb__btn cb__btn--primary" type="button"
-            onClick={() => press(() => browserApi.grant(focus.request.origin, 1))}>Ja, i 1 timme</button>
+            onClick={() => press(() => browserApi.grant(focus.request.origin, 1))}>Yes, for 1 hour</button>
           <button className="cb__btn" type="button"
-            onClick={() => press(() => browserApi.grant(focus.request.origin, null))}>Ja, tills jag tar bort det</button>
+            onClick={() => press(() => browserApi.grant(focus.request.origin, null))}>Yes, until I remove it</button>
           <button className="cb__btn" type="button"
-            onClick={() => press(() => browserApi.dismiss(focus.request.id))}>Nej</button>
+            onClick={() => press(() => browserApi.dismiss(focus.request.id))}>No</button>
         </>);
 
     case "login":
-      return card("ask", "Logga in först",
-        <p>Logga in på <strong>{focus.request.origin.replace(/^https?:\/\//, "")}</strong> i Brave-fönstret. Claude väntar tills du är klar.</p>,
+      return card("ask", "Log in first",
+        <p>Log in to <strong>{focus.request.origin.replace(/^https?:\/\//, "")}</strong> in the Brave panel. Claude waits until you are done.</p>,
         <button className="cb__btn cb__btn--primary" type="button"
-          onClick={() => press(() => browserApi.dismiss(focus.request.id))}>Klar, jag har loggat in</button>);
+          onClick={() => press(() => browserApi.dismiss(focus.request.id))}>Done, I have logged in</button>);
 
     case "paused":
-      return card("paused", "Claude är pausad",
-        <p>Claude gör ingenting nu. Tryck på Kör när den ska fortsätta.</p>,
+      return card("paused", "Claude is paused",
+        <p>Claude is not doing anything now. Press Run when it should continue.</p>,
         <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(() => browserApi.pause(false))}>
-          ▶ Kör
+          ▶ Run
         </button>);
 
     case "working":
-      return card("working", "Claude jobbar",
+      return card("working", "Claude is working",
         <p>{plainStep(focus.step ?? "")}</p>,
         <button className="cb__btn" type="button" onClick={() => press(() => browserApi.pause(true))}>
-          ❚❚ Pausa Claude
+          ❚❚ Pause Claude
         </button>);
 
     case "idle":
       return card(
         "idle",
-        worked ? "Klar" : "Claude väntar på dig",
+        worked ? "Done" : "Claude is waiting for you",
         <p>{worked
-          ? "Skriv nästa uppgift i Claude-terminalen. Sidorna visas i panelen Brave."
-          : "Skriv i Claude-terminalen vad Claude ska göra. Sidorna visas i panelen Brave."}</p>,
+          ? "Type the next task in the Claude terminal. The sites show in the Brave panel."
+          : "Type in the Claude terminal what Claude should do. The sites show in the Brave panel."}</p>,
         <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(start)}>
-          {running ? "Öppna Claude-terminalen" : "Starta Claude och öppna Brave"}
+          {running ? "Open the Claude terminal" : "Start Claude and open Brave"}
         </button>,
       );
   }

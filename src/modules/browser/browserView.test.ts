@@ -18,14 +18,14 @@ assertEqual(focusOf(open, [approval], [access], "x").kind, "approval", "approval
 assertEqual(focusOf(open, [], [login, access], undefined).kind, "access", "access before login");
 assertEqual(focusOf(open, [], [login], undefined).kind, "login", "login");
 assertEqual(focusOf({ ...open, paused: true }, [], [], "x").kind, "paused", "paused beats working");
-assertEqual(focusOf(open, [], [], "Nästa: click button \"Spara\""), { kind: "working", step: "Nästa: click button \"Spara\"" }, "working");
+assertEqual(focusOf(open, [], [], "Next: click button \"Spara\""), { kind: "working", step: "Next: click button \"Spara\"" }, "working");
 assertEqual(focusOf(open, [], [], undefined).kind, "idle", "idle");
 
-assertEqual(plainStep('Nästa: click button "Skicka"'), 'Claude tänker klicka på "Skicka"', "click step");
-assertEqual(plainStep("Nästa: press tangent Enter"), "Claude tänker trycka Enter", "press step");
+assertEqual(plainStep('Next: click button "Skicka"'), 'Claude is about to click "Skicka"', "click step");
+assertEqual(plainStep("Next: press key Enter"), "Claude is about to press Enter", "press step");
 assertEqual(
-  plainEvent({ t: 0, type: "approval", text: 'Väntar på godkännande: click "Dela"' }),
-  'Claude frågade dig: Dela',
+  plainEvent({ t: 0, type: "approval", text: 'Waiting for approval: click "Dela"' }),
+  'Claude asked you: Dela',
   "approval asked",
 );
 assertEqual(plainEvent({ t: 0, type: "request", text: "access: x" }), null, "requests are hidden in the log");
