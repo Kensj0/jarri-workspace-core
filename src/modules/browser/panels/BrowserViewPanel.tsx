@@ -47,16 +47,18 @@ export function BrowserViewPanel() {
     return { x: (event.clientX - rect.left) / rect.width, y: (event.clientY - rect.top) / rect.height };
   };
 
-  const mouse = (event: string) => (event: MouseEvent) => {
+  // The service expects "down", "up" or "move". The React event itself can not be sent as JSON.
+  const mouse = (kind: "mousedown" | "mouseup" | "mousemove") => (event: MouseEvent) => {
     const point = at(event);
     if (!point) return;
-    if (event.type === "mousedown") surface.current?.focus();
-    if (event.type === "mousemove") {
+    if (kind === "mousedown") surface.current?.focus();
+    if (kind === "mousemove") {
       const now = Date.now();
       if (now - lastMove.current < MOVE_MS) return;
       lastMove.current = now;
     }
-    void send({ type: "mouse", event, ...point });
+    const name = kind === "mousedown" ? "down" : kind === "mouseup" ? "up" : "move";
+    void send({ type: "mouse", event: name, ...point });
   };
 
   const onWheel = (event: WheelEvent) => {
