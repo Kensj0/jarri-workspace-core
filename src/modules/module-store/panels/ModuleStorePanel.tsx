@@ -96,7 +96,7 @@ const BADGE: Record<Exclude<Kind, "service">, { text: string; color: string }> =
 };
 
 export function ModuleStorePanel({ getModules, openPanel }: Props) {
-  const modules = getModules();
+  const builtIn = getModules();
   const [apps, setApps] = useState<AppEntry[] | null>(null);
   const [health, setHealth] = useState<Record<string, Health>>({});
   const [updates, setUpdates] = useState<Record<string, UpdateInfo> | null>(null);
@@ -173,6 +173,15 @@ export function ModuleStorePanel({ getModules, openPanel }: Props) {
       window.clearInterval(timer);
     };
   }, []);
+
+  // Built-in modules, plus apps from apps.json that are not modules (for
+  // example DevChron). Those have no version or panels inside Jarri.
+  const modules: PersistedModuleRecord[] = [
+    ...builtIn,
+    ...(apps ?? [])
+      .filter((app) => !builtIn.some((module) => module.moduleId === app.id))
+      .map((app) => ({ moduleId: app.id, version: "—", registeredPanelTypes: [] })),
+  ];
 
   async function runUpdate(moduleId: string) {
     setBusy(moduleId);
