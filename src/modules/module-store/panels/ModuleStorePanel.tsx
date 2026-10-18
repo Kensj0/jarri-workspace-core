@@ -14,6 +14,11 @@ const SERVICE_PORTS: Record<string, number> = {
   "claude-history": 8784,
 };
 
+// Web apps run outside this computer. They get their own label and a link.
+const WEB_APPS: Record<string, string> = {
+  kennystuner: "https://kennystuner.netlify.app/",
+};
+
 const CHECK_INTERVAL_MS = 15_000;
 
 type Health = "up" | "down" | "unknown";
@@ -40,6 +45,19 @@ const LABEL: Record<Health, string> = {
   up: "Tjänsten körs",
   down: "Tjänsten ligger nere",
   unknown: "Ingen tjänst",
+};
+
+type Kind = "service" | "web" | "builtin";
+
+function kindOf(moduleId: string): Kind {
+  if (moduleId in SERVICE_PORTS) return "service";
+  if (moduleId in WEB_APPS) return "web";
+  return "builtin";
+}
+
+const BADGE: Record<Exclude<Kind, "service">, { text: string; color: string }> = {
+  web: { text: "Webbapp", color: "#2f6fbf" },
+  builtin: { text: "Inbyggd", color: "#7a6a4f" },
 };
 
 export function ModuleStorePanel({ getModules }: Props) {
@@ -76,8 +94,8 @@ export function ModuleStorePanel({ getModules }: Props) {
   return (
     <ul className="module-store__list" style={{ listStyle: "none", padding: 8, margin: 0 }}>
       {modules.map((module) => {
-        const hasService = module.moduleId in SERVICE_PORTS;
-        const status: Health = hasService ? (health[module.moduleId] ?? "unknown") : "unknown";
+        const kind = kindOf(module.moduleId);
+        const status: Health = kind === "service" ? (health[module.moduleId] ?? "unknown") : "unknown";
         const isOpen = openId === module.moduleId;
 
         return (
@@ -87,11 +105,26 @@ export function ModuleStorePanel({ getModules }: Props) {
               onClick={() => setOpenId(isOpen ? null : module.moduleId)}
               style={{ all: "unset", cursor: "pointer", display: "flex", gap: 8, alignItems: "center", width: "100%" }}
             >
-              <span
-                aria-label={LABEL[status]}
-                title={LABEL[status]}
-                style={{ width: 10, height: 10, borderRadius: 5, background: DOT[status], flex: "0 0 auto" }}
-              />
+              {kind === "service" ? (
+                <span
+                  aria-label={LABEL[status]}
+                  title={LABEL[status]}
+                  style={{ width: 10, height: 10, borderRadius: 5, background: DOT[status], flex: "0 0 auto" }}
+                />
+              ) : (
+                <span
+                  style={{
+                    flex: "0 0 auto",
+                    fontSize: "0.75em",
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                    color: "#fff",
+                    background: BADGE[kind].color,
+                  }}
+                >
+                  {BADGE[kind].text}
+                </span>
+              )}
               <strong>{module.moduleId}</strong>
               <span style={{ opacity: 0.7 }}>version {module.version}</span>
               <span style={{ marginLeft: "auto", opacity: 0.6 }}>{isOpen ? "▲" : "Mer ▼"}</span>
@@ -100,7 +133,15 @@ export function ModuleStorePanel({ getModules }: Props) {
             {isOpen && (
               <div className="module-store__details" style={{ marginTop: 6, marginLeft: 18, fontSize: "0.9em" }}>
                 <div>Paneler: {module.registeredPanelTypes.join(", ") || "inga"}</div>
-                <div>Status: {LABEL[status]}{hasService ? ` (port ${SERVICE_PORTS[module.moduleId]})` : ""}</div>
+                {kind === "service" && (
+                  <div>Status: {LABEL[status]} (port {SERVICE_PORTS[module.moduleId]})</div>
+                )}
+                {kind === "web" && (
+                  <div>
+                    Webbapp: <a href={WEB_APPS[module.moduleId]} target="_blank" rel="noreferrer">{WEB_APPS[module.moduleId]}</a>
+                  </div>
+                )}
+                {kind === "builtin" && <div>Inbyggd i Jarri. Ingen tjänst att kontrollera.</div>}
               </div>
             )}
           </li>
