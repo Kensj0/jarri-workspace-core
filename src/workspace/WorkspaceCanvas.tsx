@@ -57,7 +57,7 @@ type Props = {
   canvasScale: number;
   canvasCamera: WorkspaceCanvasCamera;
   preferences: WorkspacePreferences;
-  modules: Array<Pick<WorkspaceModuleDefinition, "moduleId" | "title" | "version">>;
+  modules: Array<Pick<WorkspaceModuleDefinition, "moduleId" | "title">>;
   fileOperationClipboard: unknown;
   setFileOperationClipboard: (clipboard: unknown) => void;
   onOpenPanelsMenu: () => void;

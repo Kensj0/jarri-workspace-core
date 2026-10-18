@@ -147,7 +147,6 @@ export function WorkspaceShell() {
   const modules = runtime.listModules().map((module) => ({
     moduleId: module.moduleId,
     title: module.title,
-    version: module.version,
   }));
 
   const panelGroups = useMemo(
@@ -383,8 +382,7 @@ export function WorkspaceShell() {
 
               const storePanel = controller.activeTab.panels.find(
                 (panel) =>
-                  panel.moduleId === "core" &&
-                  panel.panelType === "module-store",
+                  panel.moduleId === "modules" && panel.panelType === "store",
               );
 
               if (storePanel) {
@@ -392,7 +390,7 @@ export function WorkspaceShell() {
                 return;
               }
 
-              controller.createPanel("core", "module-store");
+              controller.createPanel("modules", "store");
             }}
           >
             Modules
