@@ -15,6 +15,7 @@ type AppEntry = {
   kind: "service" | "web" | "builtin";
   port?: number;
   ui?: string;
+  installed?: boolean;
 };
 
 async function loadApps(): Promise<AppEntry[] | null> {
@@ -142,7 +143,7 @@ export function ModuleStorePanel({ getModules, openPanel }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    const services = (apps ?? []).filter((app) => app.kind === "service" && app.port);
+    const services = (apps ?? []).filter((app) => app.kind === "service" && app.port && app.installed !== false);
 
     async function refresh() {
       const entries = await Promise.all(
@@ -224,6 +225,25 @@ export function ModuleStorePanel({ getModules, openPanel }: Props) {
       setMessage(`Undo failed: ${String(error)}`);
     } finally {
       setBusy(null);
+      setUpdates(await loadUpdates());
+    }
+  }
+
+  async function runInstall(moduleId: string) {
+    setBusy(moduleId);
+    setMessage(null);
+    try {
+      const response = await fetch(`http://127.0.0.1:${STORE_PORT}/install/${moduleId}`, {
+        method: "POST",
+        signal: AbortSignal.timeout(180_000),
+      });
+      const body = (await response.json()) as { error?: string };
+      setMessage(response.ok ? `${moduleId} installed and started.` : `Install failed: ${body.error ?? response.status}`);
+    } catch (error) {
+      setMessage(`Install failed: ${String(error)}`);
+    } finally {
+      setBusy(null);
+      setApps(await loadApps());
       setUpdates(await loadUpdates());
     }
   }
@@ -343,10 +363,18 @@ export function ModuleStorePanel({ getModules, openPanel }: Props) {
               {isOpen && (
                 <div className="module-store__details" style={{ marginTop: 6, marginLeft: 18, fontSize: "0.9em" }}>
                   <div>Panels: {module.registeredPanelTypes.join(", ") || "none"}</div>
-                  {kind === "service" && (
+                  {kind === "service" && app?.installed === false && (
+                    <div>
+                      Not installed (port {app?.port}).{" "}
+                      <button type="button" disabled={busy !== null} onClick={() => void runInstall(module.moduleId)}>
+                        {busy === module.moduleId ? "Installing…" : "Install"}
+                      </button>
+                    </div>
+                  )}
+                  {kind === "service" && app?.installed !== false && (
                     <div>Status: {LABEL[status]} (port {app?.port})</div>
                   )}
-                  {kind === "service" && (
+                  {kind === "service" && app?.installed !== false && (
                     <div style={{ marginTop: 6, display: "flex", gap: 6 }}>
                       <button type="button" disabled={busy !== null} onClick={() => void runRestart(module.moduleId)}>
                         Restart
@@ -405,7 +433,7 @@ export function ModuleStorePanel({ getModules, openPanel }: Props) {
                     </div>
                   )}
                   {kind === "builtin" && <div>Built into Jarri. No service to check.</div>}
-                  {app?.ui && openPanel && (
+                  {app?.ui && openPanel && app.installed !== false && (
                     <div style={{ marginTop: 6 }}>
                       <button
                         type="button"
