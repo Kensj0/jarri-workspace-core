@@ -102,6 +102,23 @@ export function ModuleStorePanel({ getModules }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [notify, setNotify] = useState<boolean | null>(null);
+  const [logs, setLogs] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`http://127.0.0.1:${STORE_PORT}/settings`, { signal: AbortSignal.timeout(3000) })
+      .then((response) => response.json() as Promise<{ notify: boolean }>)
+      .then((body) => {
+        if (!cancelled) setNotify(body.notify);
+      })
+      .catch(() => {
+        if (!cancelled) setNotify(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,14 +215,70 @@ export function ModuleStorePanel({ getModules }: Props) {
     }
   }
 
+  async function runRestart(moduleId: string) {
+    setBusy(moduleId);
+    setMessage(null);
+    try {
+      const response = await fetch(`http://127.0.0.1:${STORE_PORT}/restart/${moduleId}`, {
+        method: "POST",
+        signal: AbortSignal.timeout(60_000),
+      });
+      setMessage(response.ok ? `${moduleId} restarted.` : `Restart failed (${response.status}).`);
+    } catch (error) {
+      setMessage(`Restart failed: ${String(error)}`);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function showLog(moduleId: string) {
+    try {
+      const response = await fetch(`http://127.0.0.1:${STORE_PORT}/logs/${moduleId}`, {
+        signal: AbortSignal.timeout(20_000),
+      });
+      const body = (await response.json()) as { lines?: string[]; error?: string };
+      setLogs((current) => ({ ...current, [moduleId]: body.lines ?? [body.error ?? "No log."] }));
+    } catch (error) {
+      setLogs((current) => ({ ...current, [moduleId]: [`Could not read the log: ${String(error)}`] }));
+    }
+  }
+
+  async function setNotifyOn(value: boolean) {
+    setNotify(value);
+    try {
+      await fetch(`http://127.0.0.1:${STORE_PORT}/settings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notify: value }),
+        signal: AbortSignal.timeout(3000),
+      });
+    } catch {
+      setMessage("Could not save the notification setting.");
+    }
+  }
+
   if (modules.length === 0) {
     return <p className="module-store__empty">No modules are registered.</p>;
   }
+
+  const updateCount = updates ? Object.values(updates).filter((info) => info.updateAvailable).length : 0;
 
   return (
     <div style={{ padding: 8 }}>
       {updates === null ? (
         <p style={{ opacity: 0.7, margin: "0 0 8px" }}>Update check unavailable. Is the module store service running?</p>
+      ) : updateCount > 0 ? (
+        <p style={{ margin: "0 0 8px", color: "#b7791f", fontWeight: 600 }}>
+          {updateCount} {updateCount === 1 ? "update" : "updates"} available
+        </p>
+      ) : (
+        <p style={{ margin: "0 0 8px", opacity: 0.7 }}>Everything is up to date</p>
+      )}
+      {notify !== null ? (
+        <label style={{ display: "flex", gap: 6, alignItems: "center", margin: "0 0 8px", fontSize: "0.9em" }}>
+          <input type="checkbox" checked={notify} onChange={(event) => void setNotifyOn(event.target.checked)} />
+          Notify me about updates
+        </label>
       ) : null}
       {message ? <p style={{ margin: "0 0 8px" }}>{message}</p> : null}
 
@@ -259,6 +332,31 @@ export function ModuleStorePanel({ getModules }: Props) {
                   <div>Panels: {module.registeredPanelTypes.join(", ") || "none"}</div>
                   {kind === "service" && (
                     <div>Status: {LABEL[status]} (port {app?.port})</div>
+                  )}
+                  {kind === "service" && (
+                    <div style={{ marginTop: 6, display: "flex", gap: 6 }}>
+                      <button type="button" disabled={busy !== null} onClick={() => void runRestart(module.moduleId)}>
+                        Restart
+                      </button>
+                      <button type="button" onClick={() => void showLog(module.moduleId)}>
+                        Log
+                      </button>
+                    </div>
+                  )}
+                  {kind === "service" && logs[module.moduleId] && (
+                    <pre
+                      style={{
+                        marginTop: 6,
+                        maxHeight: 160,
+                        overflow: "auto",
+                        fontSize: "0.85em",
+                        background: "#0001",
+                        padding: 6,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {logs[module.moduleId].join("\n")}
+                    </pre>
                   )}
                   {kind === "service" && info && (
                     <div style={{ marginTop: 4 }}>
