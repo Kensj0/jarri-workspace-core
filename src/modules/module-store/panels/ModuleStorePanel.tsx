@@ -29,6 +29,7 @@ type UpdateInfo = {
   version: string;
   latest: string;
   updateAvailable: boolean;
+  canUndo: boolean;
 };
 
 // A service that answers at all, even with 404, counts as up.
@@ -149,6 +150,26 @@ export function ModuleStorePanel({ getModules }: Props) {
     }
   }
 
+  async function runUndo(moduleId: string) {
+    setBusy(moduleId);
+    setMessage(null);
+    try {
+      const response = await fetch(`http://127.0.0.1:${STORE_PORT}/undo/${moduleId}`, {
+        method: "POST",
+        signal: AbortSignal.timeout(120_000),
+      });
+      const body = (await response.json()) as { version?: string; error?: string };
+      setMessage(
+        response.ok ? `${moduleId} is back on ${body.version}.` : `Undo failed: ${body.error ?? response.status}`,
+      );
+    } catch (error) {
+      setMessage(`Undo failed: ${String(error)}`);
+    } finally {
+      setBusy(null);
+      setUpdates(await loadUpdates());
+    }
+  }
+
   if (modules.length === 0) {
     return <p className="module-store__empty">No modules are registered.</p>;
   }
@@ -225,6 +246,16 @@ export function ModuleStorePanel({ getModules }: Props) {
                         </>
                       ) : (
                         <>Up to date ({info.version})</>
+                      )}
+                      {info.canUndo && (
+                        <button
+                          type="button"
+                          style={{ marginLeft: 8 }}
+                          disabled={busy !== null}
+                          onClick={() => void runUndo(module.moduleId)}
+                        >
+                          {busy === module.moduleId ? "Working…" : "Undo last update"}
+                        </button>
                       )}
                     </div>
                   )}
