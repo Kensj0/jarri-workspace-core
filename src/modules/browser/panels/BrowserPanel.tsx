@@ -9,6 +9,7 @@ import {
   type Permissions,
 } from "../browserClient";
 import { focusOf, friendlyError, plainEvent, plainStep, type Focus } from "../browserView";
+import type { PanelBodyProps } from "../../../core/types";
 import "./browser.css";
 
 // The panel shows one question at a time: what does Claude need from you right now?
@@ -25,7 +26,7 @@ type Snapshot = {
 const clock = (seconds: number) =>
   new Date(seconds * 1000).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
 
-export function BrowserPanel() {
+export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPanel"] }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [offline, setOffline] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -51,6 +52,15 @@ export function BrowserPanel() {
     const timer = window.setInterval(() => void refresh(), REFRESH_MS);
     return () => window.clearInterval(timer);
   }, [refresh]);
+
+  // One button for the whole job: lift a pause if there is one, open Brave, and open Claude next to it.
+  const start = async () => {
+    if (snapshot?.status.paused) await browserApi.pause(false);
+    if (!snapshot?.status.running) await browserApi.start();
+    if (!openPanel("terminal", "shell", { command: ["jarri-claude-shell"] })) {
+      throw new Error("Kunde inte öppna Claude-terminalen.");
+    }
+  };
 
   // Runs one button press, shows a plain error if it fails, then looks at the new state.
   const press = async (action: () => Promise<unknown>) => {
@@ -88,7 +98,7 @@ export function BrowserPanel() {
         <h2 className="cb__title">Claude i Brave</h2>
       </header>
 
-      <FocusCard focus={focus} press={press} />
+      <FocusCard focus={focus} press={press} start={start} running={status.running} />
 
       {notice && <p className="cb__notice">{notice}</p>}
 
@@ -152,7 +162,17 @@ export function BrowserPanel() {
 }
 
 // The one big card. Its buttons are the only things the user needs to press.
-function FocusCard({ focus, press }: { focus: Focus; press: (action: () => Promise<unknown>) => Promise<void> }) {
+function FocusCard({
+  focus,
+  press,
+  start,
+  running,
+}: {
+  focus: Focus;
+  press: (action: () => Promise<unknown>) => Promise<void>;
+  start: () => Promise<void>;
+  running: boolean;
+}) {
   const card = (tone: string, title: string, body: ReactNode, buttons: ReactNode) => (
     <section className={`cb__card cb__card--${tone}`}>
       <h3>{title}</h3>
@@ -163,16 +183,14 @@ function FocusCard({ focus, press }: { focus: Focus; press: (action: () => Promi
 
   switch (focus.kind) {
     case "closed":
-      return focus.paused
-        ? card("paused", "Claude är stoppad", <p>Tryck på knappen för att starta Claude igen. Brave öppnas då också.</p>,
-            <button className="cb__btn cb__btn--primary" type="button"
-              onClick={() => press(async () => { await browserApi.pause(false); await browserApi.start(); })}>
-              Starta Claude och öppna Brave
-            </button>)
-        : card("closed", "Brave är inte öppen", <p>Claude kan inte göra något förrän du öppnar Brave.</p>,
-            <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(browserApi.start)}>
-              Öppna Brave
-            </button>);
+      return card(
+        "closed",
+        focus.paused ? "Claude är stoppad" : "Claude är inte igång",
+        <p>Tryck på knappen. Då öppnas Brave och en Claude-terminal bredvid, redo för din uppgift.</p>,
+        <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(start)}>
+          Starta Claude och öppna Brave
+        </button>,
+      );
 
     case "approval": {
       const what = focus.approval.action === "press"
@@ -221,9 +239,14 @@ function FocusCard({ focus, press }: { focus: Focus; press: (action: () => Promi
         </button>);
 
     case "idle":
-      return card("idle", "Claude väntar",
-        <p>Be Claude göra något i terminalen. Då syns det här.</p>,
-        null);
+      return card(
+        "idle",
+        "Claude väntar på dig",
+        <p>Tryck på knappen för att öppna Claude-terminalen. Skriv sedan vad Claude ska göra, så syns det här.</p>,
+        <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(start)}>
+          {running ? "Öppna Claude-terminalen" : "Starta Claude och öppna Brave"}
+        </button>,
+      );
   }
 }
 
@@ -234,4 +257,9 @@ function Box({ title, children }: { title: string; children: ReactNode }) {
       <div className="cb__boxBody">{children}</div>
     </details>
   );
+}
+
+// The panel host passes openPanel in, so the start button can open the Claude terminal.
+export function BrowserPanelHost({ openPanel }: PanelBodyProps) {
+  return <BrowserPanel openPanel={openPanel} />;
 }

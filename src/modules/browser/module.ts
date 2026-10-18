@@ -3,7 +3,7 @@ import type {
   WorkspaceModuleDefinition,
 } from "../../core/types";
 import { staticSemantic } from "../../core/panelSemantics";
-import { BrowserPanel } from "./panels/BrowserPanel";
+import { BrowserPanelHost } from "./panels/BrowserPanel";
 
 // The browser service in jarri-apps does the work. This panel shows it and presses its buttons.
 const panel: PanelDefinition = {
@@ -49,7 +49,7 @@ const panel: PanelDefinition = {
     sections: [],
   })),
 
-  Component: BrowserPanel,
+  Component: BrowserPanelHost,
 };
 
 export const browserModule: WorkspaceModuleDefinition = {
