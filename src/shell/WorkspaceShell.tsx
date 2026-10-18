@@ -373,29 +373,6 @@ export function WorkspaceShell() {
             Settings
           </button>
 
-          <button
-            type="button"
-            className="workspace-shell__action"
-            onClick={() => {
-              setPanelMenuOpen(false);
-              setFrameControlsMenuOpen(false);
-
-              const storePanel = controller.activeTab.panels.find(
-                (panel) =>
-                  panel.moduleId === "modules" && panel.panelType === "store",
-              );
-
-              if (storePanel) {
-                controller.closePanel(storePanel.id);
-                return;
-              }
-
-              controller.createPanel("modules", "store");
-            }}
-          >
-            Modules
-          </button>
-
           <WorkspaceClock preferences={preferences.clock} />
         </div>
       </header>
