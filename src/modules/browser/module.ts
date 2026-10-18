@@ -4,6 +4,7 @@ import type {
 } from "../../core/types";
 import { staticSemantic } from "../../core/panelSemantics";
 import { BrowserPanelHost } from "./panels/BrowserPanel";
+import { BrowserViewHost } from "./panels/BrowserViewPanel";
 
 // The browser service in jarri-apps does the work. This panel shows it and presses its buttons.
 const panel: PanelDefinition = {
@@ -52,9 +53,36 @@ const panel: PanelDefinition = {
   Component: BrowserPanelHost,
 };
 
+// The view of Claude's Brave: the page, an address bar, and clicks and typing sent to Brave.
+const viewPanel: PanelDefinition = {
+  moduleId: "browser",
+  panelType: "browser-view",
+  title: "Brave",
+  description: "Claudes Brave-fönster som bild, med adressrad. Klick och skrivning går till Brave.",
+  category: "domain",
+  defaultGeometry: { x: 700, y: 200, width: 760, height: 620 },
+  minGeometry: { width: 360, height: 300 },
+  stateVersion: 1,
+  capabilities: {
+    closable: true,
+    resizable: true,
+    movable: true,
+    renameable: false,
+    canBeDirty: false,
+  },
+  createInitialState: () => ({}),
+  normalizeState: () => ({ state: {}, repaired: false, warnings: [] }),
+  semanticStrategy: staticSemantic(() => ({
+    kind: "browser-view",
+    summary: "The Brave window Claude uses, shown as a live picture.",
+    sections: [],
+  })),
+  Component: BrowserViewHost,
+};
+
 export const browserModule: WorkspaceModuleDefinition = {
   moduleId: "browser",
   title: "Claude i Brave",
-  version: "0.1.0",
-  panels: [panel],
+  version: "0.2.0",
+  panels: [panel, viewPanel],
 };

@@ -38,7 +38,10 @@ export const browserApi = {
   revoke: (origin: string) => call("POST", "/permissions/revoke", { origin }),
   decide: (id: string, approve: boolean) => call("POST", "/approvals", { id, approve }),
   dismiss: (id: string) => call("POST", "/requests/dismiss", { id }),
-  screenshot: () => call<{ url: string; title: string; image: string }>("GET", "/screenshot"),
+  screenshot: () => call<{ url: string; title: string; image: string | null }>("GET", "/screenshot"),
+  navigate: (url: string) => call("POST", "/navigate", { url }),
+  back: () => call("POST", "/navigate/back", {}),
+  input: (body: Record<string, unknown>) => call("POST", "/input", body),
 };
 
 // What Claude is about to do: the newest intent, unless the log has a newer pause or stop.

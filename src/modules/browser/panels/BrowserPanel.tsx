@@ -31,21 +31,6 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
   const [offline, setOffline] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // A small live picture of Claude's tab. It is only drawn here; Claude never gets it.
-  const [frame, setFrame] = useState<{ url: string; image: string } | null>(null);
-  const running = snapshot?.status.running ?? false;
-  useEffect(() => {
-    if (!running) {
-      setFrame(null);
-      return;
-    }
-    const grab = () =>
-      browserApi.screenshot().then((f) => setFrame(f.image ? f : null)).catch(() => setFrame(null));
-    void grab();
-    const timer = window.setInterval(() => void grab(), 1000);
-    return () => window.clearInterval(timer);
-  }, [running]);
-
   const refresh = useCallback(async () => {
     try {
       const [status, events, requests, approvals, permissions] = await Promise.all([
@@ -75,6 +60,7 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
     if (!openPanel("terminal", "shell", { command: ["jarri-claude-shell"] })) {
       throw new Error("Kunde inte öppna Claude-terminalen.");
     }
+    openPanel("browser", "browser-view", {});
   };
 
   // Runs one button press, shows a plain error if it fails, then looks at the new state.
@@ -106,6 +92,7 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
   const step = currentIntent(events);
   const focus = focusOf(status, approvals, requests, step);
   const grants = Object.entries(permissions);
+  const worked = events.some((event) => event.type === "open" || event.type === "intent");
 
   return (
     <div className="cb">
@@ -113,21 +100,7 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
         <h2 className="cb__title">Claude i Brave</h2>
       </header>
 
-      {status.running && (
-        <section className="cb__screen" aria-label="Det här ser Claude">
-          <p className="cb__muted">Det här ser Claude just nu</p>
-          {frame ? (
-            <>
-              <img src={frame.image} alt="Claudes Brave-fönster" />
-              <p className="cb__url">{frame.url.replace(/^https?:\/\//, "")}</p>
-            </>
-          ) : (
-            <p className="cb__muted">Ingen bild än. Claude har ingen flik öppen.</p>
-          )}
-        </section>
-      )}
-
-      <FocusCard focus={focus} press={press} start={start} running={status.running} />
+      <FocusCard focus={focus} press={press} start={start} running={status.running} worked={worked} />
 
       {notice && <p className="cb__notice">{notice}</p>}
 
@@ -196,11 +169,13 @@ function FocusCard({
   press,
   start,
   running,
+  worked,
 }: {
   focus: Focus;
   press: (action: () => Promise<unknown>) => Promise<void>;
   start: () => Promise<void>;
   running: boolean;
+  worked: boolean;
 }) {
   const card = (tone: string, title: string, body: ReactNode, buttons: ReactNode) => (
     <section className={`cb__card cb__card--${tone}`}>
@@ -270,8 +245,10 @@ function FocusCard({
     case "idle":
       return card(
         "idle",
-        "Claude väntar på dig",
-        <p>Skriv i Claude-terminalen vad Claude ska göra. Claude öppnar sidorna i sitt eget Brave-fönster, inte i din vanliga. Det du ser här är vad Claude gör just nu.</p>,
+        worked ? "Klar" : "Claude väntar på dig",
+        <p>{worked
+          ? "Skriv nästa uppgift i Claude-terminalen. Sidorna visas i panelen Brave."
+          : "Skriv i Claude-terminalen vad Claude ska göra. Sidorna visas i panelen Brave."}</p>,
         <button className="cb__btn cb__btn--primary" type="button" onClick={() => press(start)}>
           {running ? "Öppna Claude-terminalen" : "Starta Claude och öppna Brave"}
         </button>,
