@@ -8,7 +8,7 @@ import {
   type BrowserStatus,
   type Permissions,
 } from "../browserClient";
-import { focusOf, friendlyError, pillText, plainEvent, plainStep, type Focus } from "../browserView";
+import { focusOf, friendlyError, plainEvent, plainStep, type Focus } from "../browserView";
 import "./browser.css";
 
 // The panel shows one question at a time: what does Claude need from you right now?
@@ -86,7 +86,6 @@ export function BrowserPanel() {
     <div className="cb">
       <header className="cb__top">
         <h2 className="cb__title">Claude i Brave</h2>
-        <span className={`cb__pill cb__pill--${focus.kind}`}>{pillText(focus)}</span>
       </header>
 
       <FocusCard focus={focus} press={press} />
@@ -105,7 +104,7 @@ export function BrowserPanel() {
             </button>
           )}
           <button className="cb__btn cb__btn--danger" type="button" onClick={() => press(browserApi.stop)}>
-            ■ Stoppa och stäng Brave
+            ■ Stoppa
           </button>
         </div>
       )}
