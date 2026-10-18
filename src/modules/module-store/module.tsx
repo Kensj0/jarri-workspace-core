@@ -1,4 +1,5 @@
 import type {
+  PanelBodyProps,
   PanelDefinition,
   PersistedModuleRecord,
   WorkspaceModuleDefinition,
@@ -35,7 +36,9 @@ export function createModuleStoreModule(
       "Installed modules and versions are listed in this panel.",
     ),
     surfacePresentationMemory: {},
-    Component: () => <ModuleStorePanel getModules={getModules} />,
+    Component: (props: PanelBodyProps) => (
+      <ModuleStorePanel getModules={getModules} openPanel={props.openPanel} />
+    ),
   };
 
   return {

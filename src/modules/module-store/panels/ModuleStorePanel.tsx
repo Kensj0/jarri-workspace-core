@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import type { PersistedModuleRecord } from "../../../core/types";
+import type { PersistedModuleRecord, PanelBodyProps } from "../../../core/types";
 
 type Props = {
   getModules: () => PersistedModuleRecord[];
+  openPanel?: PanelBodyProps["openPanel"];
 };
 
 // The app list comes from jarri-apps/apps.json, through the store service.
@@ -94,7 +95,7 @@ const BADGE: Record<Exclude<Kind, "service">, { text: string; color: string }> =
   unknown: { text: "…", color: "#999999" },
 };
 
-export function ModuleStorePanel({ getModules }: Props) {
+export function ModuleStorePanel({ getModules, openPanel }: Props) {
   const modules = getModules();
   const [apps, setApps] = useState<AppEntry[] | null>(null);
   const [health, setHealth] = useState<Record<string, Health>>({});
@@ -392,6 +393,16 @@ export function ModuleStorePanel({ getModules }: Props) {
                     </div>
                   )}
                   {kind === "builtin" && <div>Built into Jarri. No service to check.</div>}
+                  {app?.ui && openPanel && (
+                    <div style={{ marginTop: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => openPanel("app-view", "app", { appId: module.moduleId })}
+                      >
+                        Open
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </li>
