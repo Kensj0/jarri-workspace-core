@@ -5,19 +5,29 @@ type Props = {
   getModules: () => PersistedModuleRecord[];
 };
 
-// Which module talks to which service in jarri-apps. Modules without a
-// service are shown without a status dot.
-const SERVICE_PORTS: Record<string, number> = {
-  terminal: 8781,
-  phone: 8782,
-  "ai-usage": 8783,
-  "claude-history": 8784,
+// The app list comes from jarri-apps/apps.json, through the store service.
+// A module with an entry there is a service or a web app. A module without
+// one is built into Jarri.
+type AppEntry = {
+  id: string;
+  title: string;
+  kind: "service" | "web" | "builtin";
+  port?: number;
+  ui?: string;
 };
 
-// Web apps run outside this computer. They get their own label and a link.
-const WEB_APPS: Record<string, string> = {
-  kennystuner: "https://kennystuner.netlify.app/",
-};
+async function loadApps(): Promise<AppEntry[] | null> {
+  try {
+    const response = await fetch(`http://127.0.0.1:${STORE_PORT}/apps`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!response.ok) return null;
+    const body = (await response.json()) as { apps: AppEntry[] };
+    return body.apps;
+  } catch {
+    return null;
+  }
+}
 
 const STORE_PORT = 8785;
 const CHECK_INTERVAL_MS = 15_000;
@@ -69,21 +79,24 @@ const LABEL: Record<Health, string> = {
   unknown: "No service",
 };
 
-type Kind = "service" | "web" | "builtin";
+type Kind = "service" | "web" | "builtin" | "unknown";
 
-function kindOf(moduleId: string): Kind {
-  if (moduleId in SERVICE_PORTS) return "service";
-  if (moduleId in WEB_APPS) return "web";
-  return "builtin";
+// Until the app list has loaded, a module's kind is unknown, not built-in.
+function kindOf(moduleId: string, apps: AppEntry[] | null): Kind {
+  if (apps === null) return "unknown";
+  const app = apps.find((entry) => entry.id === moduleId);
+  return app ? app.kind : "builtin";
 }
 
 const BADGE: Record<Exclude<Kind, "service">, { text: string; color: string }> = {
   web: { text: "Web app", color: "#2f6fbf" },
   builtin: { text: "Built-in", color: "#7a6a4f" },
+  unknown: { text: "…", color: "#999999" },
 };
 
 export function ModuleStorePanel({ getModules }: Props) {
   const modules = getModules();
+  const [apps, setApps] = useState<AppEntry[] | null>(null);
   const [health, setHealth] = useState<Record<string, Health>>({});
   const [updates, setUpdates] = useState<Record<string, UpdateInfo> | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -93,11 +106,26 @@ export function ModuleStorePanel({ getModules }: Props) {
   useEffect(() => {
     let cancelled = false;
 
+    async function refreshApps() {
+      const list = await loadApps();
+      if (!cancelled) setApps(list);
+    }
+
+    void refreshApps();
+    const timer = window.setInterval(() => void refreshApps(), UPDATE_CHECK_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const services = (apps ?? []).filter((app) => app.kind === "service" && app.port);
+
     async function refresh() {
       const entries = await Promise.all(
-        Object.entries(SERVICE_PORTS).map(async ([id, port]) => {
-          return [id, await checkService(port)] as const;
-        }),
+        services.map(async (app) => [app.id, await checkService(app.port as number)] as const),
       );
       if (!cancelled) {
         setHealth(Object.fromEntries(entries));
@@ -110,7 +138,7 @@ export function ModuleStorePanel({ getModules }: Props) {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [apps]);
 
   useEffect(() => {
     let cancelled = false;
@@ -183,7 +211,8 @@ export function ModuleStorePanel({ getModules }: Props) {
 
       <ul className="module-store__list" style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {modules.map((module) => {
-          const kind = kindOf(module.moduleId);
+          const kind = kindOf(module.moduleId, apps);
+          const app = apps?.find((entry) => entry.id === module.moduleId);
           const status: Health = kind === "service" ? (health[module.moduleId] ?? "unknown") : "unknown";
           const info = kind === "service" ? updates?.[module.moduleId] : undefined;
           const isOpen = openId === module.moduleId;
@@ -229,7 +258,7 @@ export function ModuleStorePanel({ getModules }: Props) {
                 <div className="module-store__details" style={{ marginTop: 6, marginLeft: 18, fontSize: "0.9em" }}>
                   <div>Panels: {module.registeredPanelTypes.join(", ") || "none"}</div>
                   {kind === "service" && (
-                    <div>Status: {LABEL[status]} (port {SERVICE_PORTS[module.moduleId]})</div>
+                    <div>Status: {LABEL[status]} (port {app?.port})</div>
                   )}
                   {kind === "service" && info && (
                     <div style={{ marginTop: 4 }}>
@@ -261,7 +290,7 @@ export function ModuleStorePanel({ getModules }: Props) {
                   )}
                   {kind === "web" && (
                     <div>
-                      Web app: <a href={WEB_APPS[module.moduleId]} target="_blank" rel="noreferrer">{WEB_APPS[module.moduleId]}</a>
+                      Web app: <a href={app?.ui} target="_blank" rel="noreferrer">{app?.ui}</a>
                     </div>
                   )}
                   {kind === "builtin" && <div>Built into Jarri. No service to check.</div>}
