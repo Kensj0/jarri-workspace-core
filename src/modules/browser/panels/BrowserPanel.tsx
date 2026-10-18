@@ -40,7 +40,7 @@ export function BrowserPanel({ openPanel }: { openPanel: PanelBodyProps["openPan
       return;
     }
     const grab = () =>
-      browserApi.screenshot().then(setFrame).catch(() => setFrame(null));
+      browserApi.screenshot().then((f) => setFrame(f.image ? f : null)).catch(() => setFrame(null));
     void grab();
     const timer = window.setInterval(() => void grab(), 1000);
     return () => window.clearInterval(timer);
