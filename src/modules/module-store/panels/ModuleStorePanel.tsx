@@ -43,10 +43,13 @@ type UpdateInfo = {
   canUndo: boolean;
 };
 
-// A service that answers at all, even with 404, counts as up.
+// A service that answers at all counts as up, even with an error page. The
+// request is "no-cors" so that a missing CORS header on the service does not
+// make a running service look down.
 async function checkService(port: number): Promise<Health> {
   try {
     await fetch(`http://127.0.0.1:${port}/`, {
+      mode: "no-cors",
       signal: AbortSignal.timeout(1500),
     });
     return "up";
