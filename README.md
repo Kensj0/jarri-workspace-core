@@ -337,3 +337,11 @@ project their own capabilities.
 ## License
 
 MIT
+
+## License
+
+Copyright (c) 2026 the copyright holder.
+
+This project is licensed under the GNU Affero General Public License v3.0 (see [LICENSE](LICENSE)).
+
+A commercial license is available from the copyright holder for use that the AGPL does not allow. Contact the holder through GitHub.
